@@ -1,10 +1,10 @@
-package wasm.wasi.sqlite:component;
+package wasm:wasi-sqlite;
 
 interface sqlite {
   variant sqlite-value {
     null,
     integer(s64),
-    real(float64),
+    real(f64),
     text(string),
     blob(list<u8>),
   }

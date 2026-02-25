@@ -1,6 +1,6 @@
 mod bindings;
 
-use bindings::wasm::wasi::sqlite::component::sqlite::{
+use bindings::wasm::wasi_sqlite::sqlite::{
     close_db, close_statement, open, prepare, query, SqliteValue,
 };
 
