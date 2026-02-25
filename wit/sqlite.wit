@@ -1,0 +1,37 @@
+package wasm.wasi.sqlite:component;
+
+interface sqlite {
+  variant sqlite-value {
+    null,
+    integer(s64),
+    real(float64),
+    text(string),
+    blob(list<u8>),
+  }
+
+  record sqlite-row {
+    values: list<sqlite-value>,
+  }
+
+  record sqlite-error {
+    code: s32,
+    message: string,
+  }
+
+  type db-handle = u32;
+  type statement-handle = u32;
+
+  open: func(path: string) -> result<db-handle, sqlite-error>;
+  prepare: func(db: db-handle, sql: string) -> result<statement-handle, sqlite-error>;
+  query: func(statement: statement-handle) -> result<list<sqlite-row>, sqlite-error>;
+  close-db: func(db: db-handle) -> result<_, sqlite-error>;
+  close-statement: func(statement: statement-handle) -> result<_, sqlite-error>;
+}
+
+world sqlite-component {
+  export sqlite;
+}
+
+world sqlite-client {
+  import sqlite;
+}

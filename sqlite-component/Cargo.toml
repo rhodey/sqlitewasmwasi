@@ -1,0 +1,14 @@
+[package]
+name = "sqlite-component"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rusqlite = { version = "0.32", features = ["bundled"] }
+thiserror = "2"
+wit-bindgen = "0.36"
+
