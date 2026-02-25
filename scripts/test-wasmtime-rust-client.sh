@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-if ! command -v wasm-tools >/dev/null 2>&1; then
-  echo "error: wasm-tools is required (cargo install wasm-tools --locked)" >&2
+if ! command -v wac >/dev/null 2>&1; then
+  echo "error: wac is required (cargo install wac-cli)" >&2
   exit 1
 fi
 
@@ -36,9 +36,9 @@ cargo build --manifest-path examples/rust-client/Cargo.toml --target wasm32-wasi
 mkdir -p target/wasm32-wasip2/release
 cp target/wasm32-wasip2/release/sqlite_component.wasm target/wasm32-wasip2/release/sqlite-component.wasm
 
-wasm-tools compose \
+wac plug \
   target/wasm32-wasip2/release/rust-client.wasm \
-  -d target/wasm32-wasip2/release/sqlite-component.wasm \
+  --plug target/wasm32-wasip2/release/sqlite-component.wasm \
   -o target/wasm32-wasip2/release/rust-client-composed.wasm
 
 OUTPUT="$($WASMTIME_BIN run target/wasm32-wasip2/release/rust-client-composed.wasm)"
