@@ -58,32 +58,33 @@ through the Rust target toolchain (including WASI-compatible libc support in the
 
 ## Build and validate locally
 
-### 1) Component crate unit tests (native)
+This repository is focused on the WASM WASI P2 component workflow.
+
+### End-to-end validation with wasmtime
+
+Run the scripted test that:
+- builds the SQLite component for `wasm32-wasip2`,
+- builds the Rust client for `wasm32-wasip2`,
+- composes them into one component,
+- runs with `wasmtime`, and
+- verifies stdout includes the expected log lines.
 
 ```bash
-cargo test -p sqlite-component
+./scripts/test-wasmtime-rust-client.sh
 ```
 
-### 2) Build the SQLite component core wasm module
+Expected output includes:
 
-```bash
-cargo build -p sqlite-component --target wasm32-wasip2 --release
+```text
+int=1
+text=hello from rust
 ```
 
-### 3) Build Rust client core wasm module
-
-```bash
-cargo build --manifest-path examples/rust-client/Cargo.toml --target wasm32-wasip2 --release
-```
-
-### 4) Convert to components and compose (tooling expected)
-
-You typically need:
-- `wasm-tools` (or equivalent) to wrap core modules as components.
-- `wasmtime` to run composed components.
-- `componentize-js` to compile the JS client to a component that imports this interface.
-
-Exact compose/run commands depend on your chosen composition workflow (`wasm-tools compose`, `wac`, etc.).
+Tooling expected:
+- `wasm-tools`
+- `wasmtime`
+- Rust target `wasm32-wasip2` (`rustup target add wasm32-wasip2`)
+- `wasi-sdk`/WASI sysroot available for building bundled SQLite C code (the script auto-detects `/opt/wasi-sdk-25`)
 
 ## Next steps
 

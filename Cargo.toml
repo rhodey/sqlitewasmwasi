@@ -1,5 +1,6 @@
 [workspace]
 members = ["sqlite-component", "examples/rust-client"]
+default-members = ["examples/rust-client"]
 resolver = "2"
 
 [workspace.package]
