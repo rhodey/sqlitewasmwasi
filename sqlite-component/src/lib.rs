@@ -10,7 +10,7 @@ wit_bindgen::generate!({
     world: "sqlite-component",
 });
 
-use exports::wasm::wasi::sqlite::component::sqlite::{Guest, SqliteError, SqliteRow, SqliteValue};
+use exports::wasm::wasi_sqlite::sqlite::{Guest, SqliteError, SqliteRow, SqliteValue};
 
 #[derive(Debug)]
 struct PreparedStatement {
