@@ -1,4 +1,9 @@
-mod bindings;
+mod bindings {
+    wit_bindgen::generate!({
+        path: "../../wit",
+        world: "sqlite-client",
+    });
+}
 
 use bindings::wasm::wasi_sqlite::sqlite::{
     close_db, close_statement, open, prepare, query, SqliteValue,
