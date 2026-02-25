@@ -81,7 +81,7 @@ text=hello from rust
 ```
 
 Tooling expected:
-- `wasm-tools`
+- `wac` (`cargo install wac-cli`)
 - `wasmtime`
 - Rust target `wasm32-wasip2` (`rustup target add wasm32-wasip2`)
 - `wasi-sdk`/WASI sysroot available for building bundled SQLite C code (the script auto-detects `/opt/wasi-sdk-25`)
