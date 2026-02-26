@@ -47,17 +47,24 @@ export const run = {
   run() {
     const db = open(":memory:");
 
-    exec(db, "create table demo (id integer, name text, note text, ratio real, big_id integer)");
+    exec(db, "create table demo (id integer, name text, note text, ratio real, big_id integer)", undefined);
 
     const insert = prepare(
       db,
-      "insert into demo (id, name, note, ratio, big_id) values (1, 'hello from rust', NULL, 3.25, 9007199254740993)",
+      "insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)",
+      [
+        { tag: "integer", val: 1 },
+        { tag: "text", val: "hello from rust" },
+        { tag: "null" },
+        { tag: "real", val: 3.25 },
+        { tag: "integer", val: 9007199254740993n },
+      ],
     );
     const info = runStatement(insert);
     console.log(`changes=${info.changes} last_insert_rowid=${info.lastInsertRowid}`);
     release(insert);
 
-    const select = prepare(db, "select id, name, note, ratio, big_id from demo");
+    const select = prepare(db, "select id, name, note, ratio, big_id from demo", undefined);
     const rows = all(select);
 
     for (const row of rows) {
@@ -68,7 +75,9 @@ export const run = {
 
     release(select);
 
-    const selectOne = prepare(db, "select id, name, note, ratio, big_id from demo where id = 1");
+    const selectOne = prepare(db, "select id, name, note, ratio, big_id from demo where id = ?", [
+      { tag: "integer", val: 1 },
+    ]);
     const singleRow = one(selectOne);
     if (singleRow === undefined) {
       throw new Error("expected one() to return a row");
