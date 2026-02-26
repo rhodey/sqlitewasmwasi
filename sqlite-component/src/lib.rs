@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
 use rusqlite::params_from_iter;
@@ -11,7 +11,7 @@ wit_bindgen::generate!({
 });
 
 use exports::wasm::wasi_sqlite::sqlite::{
-    Guest, SqliteError, SqliteRow, SqliteRunInfo, SqliteValue,
+    Guest, GuestStatement, SqliteError, SqliteRow, SqliteRunInfo, SqliteValue, Statement,
 };
 
 struct PreparedStatement {
@@ -157,11 +157,8 @@ impl Manager {
         Ok(())
     }
 
-    fn release_statement(&mut self, statement: u32) -> Result<(), SqliteError> {
-        self.statements
-            .remove(&statement)
-            .ok_or_else(|| invalid_handle("statement", statement))?;
-        Ok(())
+    fn release_statement(&mut self, statement: u32) {
+        self.statements.remove(&statement);
     }
 }
 
@@ -227,9 +224,36 @@ fn validate_param_count(expected_count: usize, actual_count: usize) -> Result<()
     Ok(())
 }
 
+struct StatementResource {
+    id: u32,
+    released: Cell<bool>,
+}
+
+impl StatementResource {
+    fn release_inner(&self) -> bool {
+        if self.released.get() {
+            return false;
+        }
+        with_manager(|manager| manager.release_statement(self.id));
+        self.released.set(true);
+        true
+    }
+}
+
+impl Drop for StatementResource {
+    fn drop(&mut self) {
+        if !self.released.get() {
+            with_manager(|manager| manager.release_statement(self.id));
+            self.released.set(true);
+        }
+    }
+}
+
 struct Component;
 
 impl Guest for Component {
+    type Statement = StatementResource;
+
     fn open(path: String) -> Result<u32, SqliteError> {
         with_manager(|manager| manager.open(&path))
     }
@@ -238,34 +262,43 @@ impl Guest for Component {
         with_manager(|manager| manager.exec(db, &sql, params))
     }
 
-    fn prepare(db: u32, sql: String) -> Result<u32, SqliteError> {
-        with_manager(|manager| manager.prepare(db, &sql))
-    }
-
-    fn run(statement: u32, params: Option<Vec<SqliteValue>>) -> Result<SqliteRunInfo, SqliteError> {
-        with_manager(|manager| manager.run(statement, params))
-    }
-
-    fn one(
-        statement: u32,
-        params: Option<Vec<SqliteValue>>,
-    ) -> Result<Option<SqliteRow>, SqliteError> {
-        with_manager(|manager| manager.one(statement, params))
-    }
-
-    fn all(
-        statement: u32,
-        params: Option<Vec<SqliteValue>>,
-    ) -> Result<Vec<SqliteRow>, SqliteError> {
-        with_manager(|manager| manager.all(statement, params))
+    fn prepare(db: u32, sql: String) -> Result<Statement, SqliteError> {
+        let statement_id = with_manager(|manager| manager.prepare(db, &sql))?;
+        Ok(Statement::new(StatementResource {
+            id: statement_id,
+            released: Cell::new(false),
+        }))
     }
 
     fn close(db: u32) -> Result<(), SqliteError> {
         with_manager(|manager| manager.close_db(db))
     }
+}
 
-    fn release(statement: u32) -> Result<(), SqliteError> {
-        with_manager(|manager| manager.release_statement(statement))
+impl GuestStatement for StatementResource {
+    fn run(&self, params: Option<Vec<SqliteValue>>) -> Result<SqliteRunInfo, SqliteError> {
+        if self.released.get() {
+            return Err(invalid_handle("statement", self.id));
+        }
+        with_manager(|manager| manager.run(self.id, params))
+    }
+
+    fn one(&self, params: Option<Vec<SqliteValue>>) -> Result<Option<SqliteRow>, SqliteError> {
+        if self.released.get() {
+            return Err(invalid_handle("statement", self.id));
+        }
+        with_manager(|manager| manager.one(self.id, params))
+    }
+
+    fn all(&self, params: Option<Vec<SqliteValue>>) -> Result<Vec<SqliteRow>, SqliteError> {
+        if self.released.get() {
+            return Err(invalid_handle("statement", self.id));
+        }
+        with_manager(|manager| manager.all(self.id, params))
+    }
+
+    fn release(&self) -> bool {
+        self.release_inner()
     }
 }
 
