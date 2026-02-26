@@ -1,7 +1,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use rusqlite::types::ValueRef;
+use rusqlite::params_from_iter;
+use rusqlite::types::Value;
 use rusqlite::Connection;
 
 wit_bindgen::generate!({
@@ -13,10 +14,10 @@ use exports::wasm::wasi_sqlite::sqlite::{
     Guest, SqliteError, SqliteRow, SqliteRunInfo, SqliteValue,
 };
 
-#[derive(Clone, Debug)]
 struct PreparedStatement {
     db: u32,
     sql: String,
+    params: Vec<Value>,
 }
 
 #[derive(Default)]
@@ -39,10 +40,18 @@ impl Manager {
         Ok(id)
     }
 
-    fn prepare(&mut self, db: u32, sql: &str) -> Result<u32, SqliteError> {
+    fn prepare(
+        &mut self,
+        db: u32,
+        sql: &str,
+        params: Option<Vec<SqliteValue>>,
+    ) -> Result<u32, SqliteError> {
+        let params = values_from_sqlite(params.unwrap_or_default());
         {
             let conn = self.dbs.get(&db).ok_or_else(|| invalid_handle("db", db))?;
-            conn.prepare(sql).map_err(map_error)?;
+            let stmt = conn.prepare_cached(sql).map_err(map_error)?;
+            let expected_count = stmt.parameter_count();
+            validate_param_count(expected_count, params.len())?;
         }
 
         let id = self.alloc_id();
@@ -51,31 +60,48 @@ impl Manager {
             PreparedStatement {
                 db,
                 sql: sql.to_string(),
+                params,
             },
         );
         Ok(id)
     }
 
-    fn exec(&self, db: u32, sql: &str) -> Result<(), SqliteError> {
+    fn exec(
+        &self,
+        db: u32,
+        sql: &str,
+        params: Option<Vec<SqliteValue>>,
+    ) -> Result<(), SqliteError> {
         let conn = self.dbs.get(&db).ok_or_else(|| invalid_handle("db", db))?;
-        conn.execute_batch(sql).map_err(map_error)
+        let mut stmt = conn.prepare(sql).map_err(map_error)?;
+        let params = values_from_sqlite(params.unwrap_or_default());
+        validate_param_count(stmt.parameter_count(), params.len())?;
+        stmt.execute(params_from_iter(params.iter()))
+            .map(|_| ())
+            .map_err(map_error)
     }
 
     fn run(&mut self, statement: u32) -> Result<SqliteRunInfo, SqliteError> {
         let prepared = self
             .statements
             .get(&statement)
-            .cloned()
             .ok_or_else(|| invalid_handle("statement", statement))?;
-
         let conn = self
             .dbs
-            .get_mut(&prepared.db)
+            .get(&prepared.db)
             .ok_or_else(|| invalid_handle("db", prepared.db))?;
-        let changes = conn.execute(&prepared.sql, []).map_err(map_error)?;
+        let mut stmt = conn.prepare_cached(&prepared.sql).map_err(map_error)?;
+        validate_param_count(stmt.parameter_count(), prepared.params.len())?;
+        let changes = stmt
+            .execute(params_from_iter(prepared.params.iter()))
+            .map_err(map_error)?;
+        drop(stmt);
+        let changes = changes as u64;
+        let last_insert_rowid = conn.last_insert_rowid();
+
         Ok(SqliteRunInfo {
-            changes: changes as u64,
-            last_insert_rowid: conn.last_insert_rowid(),
+            changes,
+            last_insert_rowid,
         })
     }
 
@@ -87,16 +113,18 @@ impl Manager {
         let prepared = self
             .statements
             .get(&statement)
-            .cloned()
             .ok_or_else(|| invalid_handle("statement", statement))?;
 
         let conn = self
             .dbs
             .get(&prepared.db)
             .ok_or_else(|| invalid_handle("db", prepared.db))?;
-        let mut stmt = conn.prepare(&prepared.sql).map_err(map_error)?;
+        let mut stmt = conn.prepare_cached(&prepared.sql).map_err(map_error)?;
+        validate_param_count(stmt.parameter_count(), prepared.params.len())?;
         let col_count = stmt.column_count();
-        let mut rows = stmt.query([]).map_err(map_error)?;
+        let mut rows = stmt
+            .query(params_from_iter(prepared.params.iter()))
+            .map_err(map_error)?;
 
         let mut out = Vec::new();
         while let Some(row) = rows.next().map_err(map_error)? {
@@ -114,7 +142,14 @@ impl Manager {
         self.dbs
             .remove(&db)
             .ok_or_else(|| invalid_handle("db", db))?;
-        self.statements.retain(|_, statement| statement.db != db);
+        let ids_to_remove = self
+            .statements
+            .iter()
+            .filter_map(|(id, statement)| (statement.db == db).then_some(*id))
+            .collect::<Vec<_>>();
+        for id in ids_to_remove {
+            self.statements.remove(&id);
+        }
         Ok(())
     }
 
@@ -151,14 +186,41 @@ fn invalid_handle(kind: &str, id: u32) -> SqliteError {
     }
 }
 
-fn value_from_ref(value: ValueRef<'_>) -> SqliteValue {
+fn value_from_ref(value: rusqlite::types::ValueRef<'_>) -> SqliteValue {
     match value {
-        ValueRef::Null => SqliteValue::Null,
-        ValueRef::Integer(v) => SqliteValue::Integer(v),
-        ValueRef::Real(v) => SqliteValue::Real(v),
-        ValueRef::Text(v) => SqliteValue::Text(String::from_utf8_lossy(v).to_string()),
-        ValueRef::Blob(v) => SqliteValue::Blob(v.to_vec()),
+        rusqlite::types::ValueRef::Null => SqliteValue::Null,
+        rusqlite::types::ValueRef::Integer(v) => SqliteValue::Integer(v),
+        rusqlite::types::ValueRef::Real(v) => SqliteValue::Real(v),
+        rusqlite::types::ValueRef::Text(v) => {
+            SqliteValue::Text(String::from_utf8_lossy(v).to_string())
+        }
+        rusqlite::types::ValueRef::Blob(v) => SqliteValue::Blob(v.to_vec()),
     }
+}
+
+fn values_from_sqlite(values: Vec<SqliteValue>) -> Vec<Value> {
+    values
+        .into_iter()
+        .map(|value| match value {
+            SqliteValue::Null => Value::Null,
+            SqliteValue::Integer(v) => Value::Integer(v),
+            SqliteValue::Real(v) => Value::Real(v),
+            SqliteValue::Text(v) => Value::Text(v),
+            SqliteValue::Blob(v) => Value::Blob(v),
+        })
+        .collect()
+}
+
+fn validate_param_count(expected_count: usize, actual_count: usize) -> Result<(), SqliteError> {
+    if expected_count != actual_count {
+        return Err(SqliteError {
+            code: -3,
+            message: format!(
+                "bind parameter mismatch: expected {expected_count}, got {actual_count}"
+            ),
+        });
+    }
+    Ok(())
 }
 
 struct Component;
@@ -168,12 +230,12 @@ impl Guest for Component {
         with_manager(|manager| manager.open(&path))
     }
 
-    fn exec(db: u32, sql: String) -> Result<(), SqliteError> {
-        with_manager(|manager| manager.exec(db, &sql))
+    fn exec(db: u32, sql: String, params: Option<Vec<SqliteValue>>) -> Result<(), SqliteError> {
+        with_manager(|manager| manager.exec(db, &sql, params))
     }
 
-    fn prepare(db: u32, sql: String) -> Result<u32, SqliteError> {
-        with_manager(|manager| manager.prepare(db, &sql))
+    fn prepare(db: u32, sql: String, params: Option<Vec<SqliteValue>>) -> Result<u32, SqliteError> {
+        with_manager(|manager| manager.prepare(db, &sql, params))
     }
 
     fn run(statement: u32) -> Result<SqliteRunInfo, SqliteError> {
@@ -201,7 +263,7 @@ export!(Component);
 
 #[cfg(test)]
 mod tests {
-    use super::Manager;
+    use super::{Manager, SqliteValue};
 
     #[test]
     fn end_to_end_query_works() {
@@ -209,18 +271,31 @@ mod tests {
         let db = manager.open(":memory:").expect("open should work");
 
         manager
-            .exec(db, "create table items (id integer, name text)")
+            .exec(db, "create table items (id integer, name text)", None)
             .expect("create should run");
 
         let insert = manager
-            .prepare(db, "insert into items values (1, 'apple'), (2, 'pear')")
+            .prepare(
+                db,
+                "insert into items values (?, ?), (?, ?)",
+                Some(vec![
+                    SqliteValue::Integer(1),
+                    SqliteValue::Text("apple".to_string()),
+                    SqliteValue::Integer(2),
+                    SqliteValue::Text("pear".to_string()),
+                ]),
+            )
             .expect("prepare insert should work");
         let info = manager.run(insert).expect("insert should run");
         assert_eq!(info.changes, 2);
         assert!(info.last_insert_rowid >= 1);
 
         let select = manager
-            .prepare(db, "select id, name from items order by id")
+            .prepare(
+                db,
+                "select id, name from items where id > ? order by id",
+                Some(vec![SqliteValue::Integer(0)]),
+            )
             .expect("prepare select should work");
         let rows = manager.all(select).expect("query should run");
 

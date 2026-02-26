@@ -47,8 +47,8 @@ record sqlite-run-info {
 }
 
 open: func(path: string) -> result<db-handle, sqlite-error>
-prepare: func(db: db-handle, sql: string) -> result<statement-handle, sqlite-error>
-exec: func(db: db-handle, sql: string) -> result<_, sqlite-error>
+prepare: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<statement-handle, sqlite-error>
+exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<_, sqlite-error>
 run: func(statement: statement-handle) -> result<sqlite-run-info, sqlite-error>
 one: func(statement: statement-handle) -> result<option<sqlite-row>, sqlite-error>
 all: func(statement: statement-handle) -> result<list<sqlite-row>, sqlite-error>
@@ -120,9 +120,8 @@ Tooling expected:
 
 ## Next steps
 
-1. Add parameter binding for `exec` and prepared statements.
-2. Add transaction support.
-3. Add a reproducible compose script (once final toolchain choice is fixed).
+1. Add transaction support.
+2. Add a reproducible compose script (once final toolchain choice is fixed).
 
 ## License
 

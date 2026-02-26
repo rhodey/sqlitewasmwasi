@@ -15,12 +15,21 @@ fn main() {
     exec(
         db,
         "create table demo (id integer, name text, note text, ratio real, big_id integer)",
+        None,
     )
     .expect("exec init");
 
+    let insert_params = vec![
+        SqliteValue::Integer(1),
+        SqliteValue::Text("hello from rust".to_string()),
+        SqliteValue::Null,
+        SqliteValue::Real(3.25),
+        SqliteValue::Integer(9_007_199_254_740_993),
+    ];
     let insert = prepare(
         db,
-        "insert into demo (id, name, note, ratio, big_id) values (1, 'hello from rust', NULL, 3.25, 9007199254740993)",
+        "insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)",
+        Some(&insert_params),
     )
     .expect("prepare insert");
     let info = run(insert).expect("run insert");
@@ -30,8 +39,8 @@ fn main() {
     );
     release(insert).expect("release insert");
 
-    let select =
-        prepare(db, "select id, name, note, ratio, big_id from demo").expect("prepare select");
+    let select = prepare(db, "select id, name, note, ratio, big_id from demo", None)
+        .expect("prepare select");
     let rows = all(select).expect("query rows");
 
     for row in rows {
@@ -50,7 +59,8 @@ fn main() {
 
     let select_one = prepare(
         db,
-        "select id, name, note, ratio, big_id from demo where id = 1",
+        "select id, name, note, ratio, big_id from demo where id = ?",
+        Some(&[SqliteValue::Integer(1)]),
     )
     .expect("prepare select one");
     let row = one(select_one)
