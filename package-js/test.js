@@ -21,6 +21,7 @@ function equals(actual, expected, msg) {
   }
 }
 
+// todo: test insert bigint in real col
 const test = () => {
   console.log('test')
   const db = open('file:/app/test.js.db?vfs=unix-dotfile')
@@ -32,14 +33,14 @@ const test = () => {
   let statement = db.prepare('insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)')
   let info = statement.run([1, 'hello from rust', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
-  equals(info.lastInsertRowid, 1n, 'insert row id')
+  equals(info.lastInsertRowid, 1n, 'row id 1')
   equals(true, statement.release(), 'release true')
   equals(false, statement.release(), 'release false')
 
   statement = db.prepare('insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)')
   info = statement.run([2, 'hello from rust', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
-  equals(info.lastInsertRowid, 2n, 'insert row id')
+  equals(info.lastInsertRowid, 2n, 'row id 2')
   equals(true, statement.release(), 'release true')
   equals(false, statement.release(), 'release false')
 
