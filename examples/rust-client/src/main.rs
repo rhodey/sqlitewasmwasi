@@ -10,7 +10,9 @@ use bindings::wasm::wasi_sqlite::sqlite::{
 };
 
 fn main() {
-    let db = open(":memory:").expect("open db");
+    let db = open("file:/workspace/rust-client.db?vfs=unix-dotfile").expect("open db");
+
+    exec(db, "drop table if exists demo", None).expect("drop old table");
 
     exec(
         db,

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use rusqlite::params_from_iter;
 use rusqlite::types::Value;
-use rusqlite::Connection;
+use rusqlite::{Connection, OpenFlags};
 
 wit_bindgen::generate!({
     path: "../wit",
@@ -33,7 +33,10 @@ impl Manager {
     }
 
     fn open(&mut self, path: &str) -> Result<u32, SqliteError> {
-        let conn = Connection::open(path).map_err(map_error)?;
+        let flags = OpenFlags::SQLITE_OPEN_READ_WRITE
+            | OpenFlags::SQLITE_OPEN_CREATE
+            | OpenFlags::SQLITE_OPEN_URI;
+        let conn = Connection::open_with_flags(path, flags).map_err(map_error)?;
         let id = self.alloc_id();
         self.dbs.insert(id, conn);
         Ok(id)

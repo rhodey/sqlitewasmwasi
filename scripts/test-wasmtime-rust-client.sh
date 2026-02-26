@@ -41,7 +41,10 @@ wac plug \
   --plug target/wasm32-wasip2/release/sqlite-component.wasm \
   -o target/wasm32-wasip2/release/rust-client-composed.wasm
 
-OUTPUT="$($WASMTIME_BIN run target/wasm32-wasip2/release/rust-client-composed.wasm)"
+WASI_DB_DIR="${WASI_DB_DIR:-$ROOT_DIR/target/wasi-db-rust-client}"
+mkdir -p "$WASI_DB_DIR"
+
+OUTPUT="$($WASMTIME_BIN run --dir "$WASI_DB_DIR"::/workspace target/wasm32-wasip2/release/rust-client-composed.wasm)"
 printf '%s\n' "$OUTPUT"
 
 grep -q '^int=1$' <<<"$OUTPUT"
