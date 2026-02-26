@@ -21,23 +21,23 @@ build-rust:
   just plug-rust
 
 run-rust:
-  mkdir -p mount/
-  wasmtime run --dir ./mount::/workspace target/wasm32-wasip2/release/example-rust-total.wasm
+  mkdir -p app/
+  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example-rust-total.wasm
 
 plug-js:
   wac plug \
-    target/wasm32-wasip2/release/example-js.wasm \
+    package-js/dist/test.js.wasm \
     --plug target/wasm32-wasip2/release/sqlite_component.wasm \
-    -o target/wasm32-wasip2/release/example-js-total.wasm
+    -o target/wasm32-wasip2/release/test.js.total.wasm
 
 build-js:
-  npm --prefix example-js install
-  npm --prefix example-js run build
+  npm --prefix package-js install
+  npm --prefix package-js run build
   just plug-js
 
 run-js:
-  mkdir -p mount/
-  wasmtime run --dir ./mount::/workspace target/wasm32-wasip2/release/example-js-total.wasm
+  mkdir -p app/
+  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/test.js.total.wasm
 
 build:
   just component
