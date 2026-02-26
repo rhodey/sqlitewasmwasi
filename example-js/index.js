@@ -2,7 +2,7 @@
 // The generated component imports `wasm:wasi-sqlite/sqlite` and
 // exports `wasi:cli/run@0.2.3#run`.
 
-import { open, prepare, exec, close } from "wasm:wasi-sqlite/sqlite";
+import { open, prepare, exec, close } from "wasm:sqlite-wasi/sqlite";
 
 const printSqliteValue = (value, label) => {
   if (value === null) {

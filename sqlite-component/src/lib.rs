@@ -10,7 +10,7 @@ wit_bindgen::generate!({
     world: "sqlite-component",
 });
 
-use exports::wasm::wasi_sqlite::sqlite::{
+use exports::wasm::sqlite_wasi::sqlite::{
     Guest, GuestStatement, SqliteError, SqliteRow, SqliteRunInfo, SqliteValue, Statement,
 };
 

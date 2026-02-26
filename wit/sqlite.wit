@@ -1,4 +1,4 @@
-package wasm:wasi-sqlite;
+package wasm:sqlite-wasi;
 
 interface sqlite {
   variant sqlite-value {

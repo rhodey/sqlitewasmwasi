@@ -5,7 +5,7 @@ mod bindings {
     });
 }
 
-use bindings::wasm::wasi_sqlite::sqlite::{close, exec, open, prepare, SqliteRow, SqliteValue};
+use bindings::wasm::sqlite_wasi::sqlite::{close, exec, open, prepare, SqliteRow, SqliteValue};
 
 fn value_by_name<'a>(row: &'a SqliteRow, name: &str) -> Option<&'a SqliteValue> {
     row.columns
