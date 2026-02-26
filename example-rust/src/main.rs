@@ -15,7 +15,7 @@ fn value_by_name<'a>(row: &'a SqliteRow, name: &str) -> Option<&'a SqliteValue> 
 }
 
 fn main() {
-    let db = open("file:/workspace/rust-client.db?vfs=unix-dotfile").expect("open db");
+    let db = open("file:/app/rust-client.db?vfs=unix-dotfile").expect("open db");
 
     exec(db, "drop table if exists demo", None).expect("drop old table");
 
