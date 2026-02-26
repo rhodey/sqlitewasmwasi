@@ -91,6 +91,31 @@ const test = () => {
   row = statement.one()
   equals(row, { '3': 3n }, 'select 3 col name')
 
+  db.exec('drop table if exists nums')
+  db.exec('create table nums (id integer, ratio real) strict')
+  statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
+  info = statement.run([1, 3.25])
+  equals(info.changes, 1n, 'insert 1 real')
+  info = statement.run([2, 2])
+  equals(info.changes, 1n, 'insert 1 int as real')
+  info = statement.run([3, 3n])
+  equals(info.changes, 1n, 'insert 1 bigint as real')
+
+  try {
+    statement.run([4, 'abc'])
+    console.log('fail', 'insert text as real throws')
+  } catch (err) {
+    console.log('pass', 'insert text as real throws')
+    console.log(err.code, err.message)
+  }
+
+  statement = db.prepare('select * from nums order by id')
+  rows = statement.all()
+  equals(rows.length, 3, 'select 3 rows')
+  equals(rows[0], { id: 1n, ratio: 3.25 }, 'select row id 1')
+  equals(rows[1], { id: 2n, ratio: 2.0 }, 'select row id 2')
+  equals(rows[2], { id: 3n, ratio: 3.0 }, 'select row id 3')
+
   db.close()
   equals(1, 1, 'close')
 }

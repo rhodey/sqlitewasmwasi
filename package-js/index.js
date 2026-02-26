@@ -31,6 +31,19 @@ const rowsToObjects = (rows) => {
   return result
 }
 
+const unwrapErr = (fn) => {
+  try {
+    return fn()
+  } catch (err) {
+    if (err.payload) {
+      const errr = new Error(err.payload.message)
+      errr.code = err.payload.code
+      throw errr
+    }
+    throw err
+  }
+}
+
 class Statement {
   constructor(stmt) {
     this.stmt = stmt
@@ -38,25 +51,32 @@ class Statement {
 
   run(params=[]) {
     params = valuesToParams(params)
-    const info = this.stmt.run(params)
-    return info
+    const fn = () => this.stmt.run(params)
+    return unwrapErr(fn)
   }
 
   one(params=[]) {
     params = valuesToParams(params)
-    const row = this.stmt.one(params)
-    if (row === null || row === undefined) { return null }
-    return rowsToObjects([row])[0]
+    const fn = () => {
+      const row = this.stmt.one(params)
+      if (row === null || row === undefined) { return null }
+      return rowsToObjects([row])[0]
+    }
+    return unwrapErr(fn)
   }
 
   all(params=[]) {
     params = valuesToParams(params)
-    const rows = this.stmt.all(params)
-    return rowsToObjects(rows)
+    const fn = () => {
+      const rows = this.stmt.all(params)
+      return rowsToObjects(rows)
+    }
+    return unwrapErr(fn)
   }
 
   release() {
-    return this.stmt.release()
+    const fn = () => this.stmt.release()
+    return unwrapErr(fn)
   }
 }
 
@@ -67,7 +87,8 @@ class Database {
 
   exec(sql, params=[]) {
     params = valuesToParams(params)
-    return exec(this.handle, sql, params)
+    const fn = () => exec(this.handle, sql, params)
+    return unwrapErr(fn)
   }
 
   prepare(sql) {
@@ -76,7 +97,8 @@ class Database {
   }
 
   close() {
-    return close(this.handle)
+    const fn = () => close(this.handle)
+    return unwrapErr(fn)
   }
 }
 
