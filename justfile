@@ -51,4 +51,4 @@ run:
 test:
   just build
   bash -c scripts/test-example-rust.sh
-  bash -c scripts/test-example-js.sh
+  bash -c scripts/test-package-js.sh
