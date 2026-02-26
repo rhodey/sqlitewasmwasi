@@ -26,27 +26,27 @@ function equals(actual, expected, msg) {
 // todo: test use after release
 const test = () => {
   console.log('test')
-  const db = open('file:/app/test.js.db?vfs=unix-dotfile')
+  const db = open('/app/test.js.db')
   db.exec('drop table if exists demo')
 
   let num = db.exec('create table demo (id integer, name text, note text, ratio real, big_id integer)')
   equals(num, 0n, 'create table no rows')
 
   let statement = db.prepare('insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)')
-  let info = statement.run([1, 'hello from rust', null, 3.25, 9007199254740993n])
+  let info = statement.run([1, 'hello from js', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
   equals(info.lastInsertRowid, 1n, 'row id 1')
   equals(true, statement.release(), 'release true')
   equals(false, statement.release(), 'release false')
 
   statement = db.prepare('insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)')
-  info = statement.run([2, 'hello from rust', null, 3.25, 9007199254740993n])
+  info = statement.run([2, 'hello from js', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
   equals(info.lastInsertRowid, 2n, 'row id 2')
   equals(true, statement.release(), 'release true')
   equals(false, statement.release(), 'release false')
 
-  const obj1 = { id: 1n, name: 'hello from rust', note: null, ratio: 3.25, big_id: 9007199254740993n }
+  const obj1 = { id: 1n, name: 'hello from js', note: null, ratio: 3.25, big_id: 9007199254740993n }
   const obj2 = { ...obj1, id: 2n }
 
   statement = db.prepare('select id, name, note, ratio, big_id from demo where id = 1')
