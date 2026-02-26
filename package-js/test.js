@@ -21,6 +21,7 @@ function equals(actual, expected, msg) {
   }
 }
 
+// todo: test select no col name
 // todo: test insert bigint in real col
 const test = () => {
   console.log('test')
