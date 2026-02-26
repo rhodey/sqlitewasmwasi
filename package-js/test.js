@@ -3,10 +3,8 @@ import { open } from './index.js'
 function toString(obj) {
   const o = { ...obj }
   Object.keys(o).forEach((key) => {
-    if (typeof o[key] === 'bigint') {
-      o[key] = `${o[key]}n`
-    } else {
-    }
+    if (typeof o[key] !== 'bigint') { return }
+    o[key] += 'n'
   })
   return JSON.stringify(o)
 }
@@ -24,7 +22,7 @@ function equals(actual, expected, msg) {
 }
 
 const test = () => {
-  console.log('hi hi')
+  console.log('test')
   const db = open('file:/app/test.js.db?vfs=unix-dotfile')
   db.exec('drop table if exists demo')
 
