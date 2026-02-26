@@ -1,4 +1,5 @@
 .env*
 *\.swp
 target/
-wit/deps/
+node_modules/
+examples/js-client/node_modules/
