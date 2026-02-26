@@ -1,4 +1,5 @@
 [workspace]
+authors = ["rhodey <mike@rhodey.org>"]
 members = ["sqlite-component", "example-rust"]
 default-members = ["example-rust"]
 resolver = "2"
