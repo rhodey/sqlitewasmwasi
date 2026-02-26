@@ -1,5 +1,5 @@
 # SQLiteWASI
-WASI P2 SQLite component.
+SQLite WASI P2 component.
 
 Use SQLite from WASM apps. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime) or [one of these](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
 
