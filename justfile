@@ -6,7 +6,9 @@ component:
   export $(cat .env | xargs) && cargo build -p sqlite-component --release
 
 component-docker:
-  {{sudo}} docker build -f Dockerfile -t sqlite-component .
+  mkdir -p target/wasm32-wasip2/release
+  {{sudo}} docker build -f Dockerfile -t sqlite-component --target export .
+  {{sudo}} docker build --output type=local,dest=./target/wasm32-wasip2/release --target export .
 
 plug-rust:
   wac plug \
