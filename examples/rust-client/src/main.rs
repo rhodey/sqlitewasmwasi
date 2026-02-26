@@ -56,8 +56,8 @@ fn main() {
     let row = one(select_one)
         .expect("query one row")
         .expect("expected one() to return a row");
-    println!("one() got single row back");
     assert_eq!(row.values.len(), 5, "expected one() to return 5 columns");
+    println!("one() got single row back");
     release(select_one).expect("release select one");
 
     close(db).expect("close db");
