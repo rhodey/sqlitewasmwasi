@@ -32,11 +32,11 @@ console.log(info.lastInsertRowid, '== 2')
 
 statement = db.prepare('select id, name, note, ratio, big_id from demo where id = ?')
 let row = statement.one([1])
-console.log(row) >> { id: 1n, name: 'hello from js', note: null, ratio: 3.25, big_id: 9007199254740993n }
+console.log(row) // >> { id: 1n, name: 'hello from js', note: null, ratio: 3.25, big_id: 9007199254740993n }
 
-statement = db.prepare('select id, name, note, ratio, big_id from demo where 1 = ? order by id')
+statement = db.prepare('select * from demo where 1 = ? order by id')
 let rows = statement.all([1])
-console.log(rows) >> [ ... ]
+console.log(rows) // >> [ ... ]
 ```
 
 ## Run tests
