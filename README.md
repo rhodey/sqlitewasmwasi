@@ -55,7 +55,7 @@ resource statement {
 }
 
 prepare: func(db: db-handle, sql: string) -> result<statement, sqlite-error>
-exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<_, sqlite-error>
+exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<u64, sqlite-error>
 close: func(db: db-handle) -> result<_, sqlite-error>
 ```
 

@@ -33,7 +33,7 @@ interface sqlite {
   }
 
   open: func(path: string) -> result<db-handle, sqlite-error>;
-  exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<_, sqlite-error>;
+  exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<u64, sqlite-error>;
   prepare: func(db: db-handle, sql: string) -> result<statement, sqlite-error>;
   close: func(db: db-handle) -> result<_, sqlite-error>;
 }

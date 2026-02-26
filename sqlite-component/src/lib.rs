@@ -65,13 +65,13 @@ impl Manager {
         db: u32,
         sql: &str,
         params: Option<Vec<SqliteValue>>,
-    ) -> Result<(), SqliteError> {
+    ) -> Result<u64, SqliteError> {
         let conn = self.dbs.get(&db).ok_or_else(|| invalid_handle("db", db))?;
         let mut stmt = conn.prepare(sql).map_err(map_error)?;
         let params = values_from_sqlite(params.unwrap_or_default());
         validate_param_count(stmt.parameter_count(), params.len())?;
         stmt.execute(params_from_iter(params.iter()))
-            .map(|_| ())
+            .map(|changes| changes as u64)
             .map_err(map_error)
     }
 
@@ -174,8 +174,13 @@ fn with_manager<T>(f: impl FnOnce(&mut Manager) -> T) -> T {
 }
 
 fn map_error(err: rusqlite::Error) -> SqliteError {
+    let code = err
+        .sqlite_error_code()
+        .map(|sqlite_code| sqlite_code as i32)
+        .unwrap_or(-1);
+
     SqliteError {
-        code: -1,
+        code,
         message: err.to_string(),
     }
 }
@@ -258,7 +263,7 @@ impl Guest for Component {
         with_manager(|manager| manager.open(&path))
     }
 
-    fn exec(db: u32, sql: String, params: Option<Vec<SqliteValue>>) -> Result<(), SqliteError> {
+    fn exec(db: u32, sql: String, params: Option<Vec<SqliteValue>>) -> Result<u64, SqliteError> {
         with_manager(|manager| manager.exec(db, &sql, params))
     }
 
