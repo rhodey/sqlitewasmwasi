@@ -174,8 +174,13 @@ fn with_manager<T>(f: impl FnOnce(&mut Manager) -> T) -> T {
 }
 
 fn map_error(err: rusqlite::Error) -> SqliteError {
+    let code = err
+        .sqlite_error_code()
+        .map(|sqlite_code| sqlite_code as i32)
+        .unwrap_or(-1);
+
     SqliteError {
-        code: -1,
+        code,
         message: err.to_string(),
     }
 }
