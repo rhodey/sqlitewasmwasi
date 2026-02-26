@@ -47,16 +47,21 @@ record sqlite-run-info {
 }
 
 open: func(path: string) -> result<db-handle, sqlite-error>
-prepare: func(db: db-handle, sql: string) -> result<statement-handle, sqlite-error>
+resource statement {
+  run: func(params: option<list<sqlite-value>>) -> result<sqlite-run-info, sqlite-error>
+  one: func(params: option<list<sqlite-value>>) -> result<option<sqlite-row>, sqlite-error>
+  all: func(params: option<list<sqlite-value>>) -> result<list<sqlite-row>, sqlite-error>
+  release: func() -> bool
+}
+
+prepare: func(db: db-handle, sql: string) -> result<statement, sqlite-error>
 exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<_, sqlite-error>
-run: func(statement: statement-handle, params: option<list<sqlite-value>>) -> result<sqlite-run-info, sqlite-error>
-one: func(statement: statement-handle, params: option<list<sqlite-value>>) -> result<option<sqlite-row>, sqlite-error>
-all: func(statement: statement-handle, params: option<list<sqlite-value>>) -> result<list<sqlite-row>, sqlite-error>
 close: func(db: db-handle) -> result<_, sqlite-error>
-release: func(statement: statement-handle) -> result<_, sqlite-error>
 ```
 
 Rows are returned as `list<sqlite-value>` where `sqlite-value` supports null/int/real/text/blob.
+
+Prepared statements are now a WIT `resource`, so callers get RAII-like cleanup semantics: statements are released when Rust drops them or when JS garbage collection finalizes the resource handle. The resource also exposes `release()` for eager/manual cleanup when desired; it returns `true` the first time and `false` on subsequent calls.
 
 ## libc / WASI compatibility note
 
