@@ -11,4 +11,4 @@ if grep -q "fail" <<<"$OUTPUT"; then
   exit 1
 fi
 
-echo "tests pass"
+echo "js tests pass"
