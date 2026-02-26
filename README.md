@@ -41,9 +41,17 @@ I think it is important that we somehow compile using a WASM WASI compatible lib
 The interface is defined in `wit/sqlite.wit`.
 
 ```wit
+record sqlite-run-info {
+  changes: u64
+  last-insert-rowid: s64
+}
+
 open: func(path: string) -> result<db-handle, sqlite-error>
 prepare: func(db: db-handle, sql: string) -> result<statement-handle, sqlite-error>
-query: func(statement: statement-handle) -> result<list<sqlite-row>, sqlite-error>
+exec: func(db: db-handle, sql: string) -> result<_, sqlite-error>
+run: func(statement: statement-handle) -> result<sqlite-run-info, sqlite-error>
+one: func(statement: statement-handle) -> result<option<sqlite-row>, sqlite-error>
+all: func(statement: statement-handle) -> result<list<sqlite-row>, sqlite-error>
 close: func(db: db-handle) -> result<_, sqlite-error>
 release: func(statement: statement-handle) -> result<_, sqlite-error>
 ```
@@ -112,10 +120,9 @@ Tooling expected:
 
 ## Next steps
 
-1. Add parameter binding to prepared statements.
-2. Add explicit execute-vs-query split for non-SELECT statements.
-3. Add transaction support.
-4. Add a reproducible compose script (once final toolchain choice is fixed).
+1. Add parameter binding for `exec` and prepared statements.
+2. Add transaction support.
+3. Add a reproducible compose script (once final toolchain choice is fixed).
 
 ## License
 

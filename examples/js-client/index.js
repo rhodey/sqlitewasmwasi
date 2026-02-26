@@ -5,7 +5,9 @@
 import {
   open,
   prepare,
-  query,
+  exec,
+  all,
+  run as runStatement,
   release,
   close,
 } from "wasm:wasi-sqlite/sqlite";
@@ -44,19 +46,18 @@ export const run = {
   run() {
     const db = open(":memory:");
 
-    const init = prepare(db, "create table demo (id integer, name text, note text, ratio real, big_id integer)");
-    query(init);
-    release(init);
+    exec(db, "create table demo (id integer, name text, note text, ratio real, big_id integer)");
 
     const insert = prepare(
       db,
       "insert into demo (id, name, note, ratio, big_id) values (1, 'hello from rust', NULL, 3.25, 9007199254740993)",
     );
-    query(insert);
+    const info = runStatement(insert);
+    console.log(`changes=${info.changes} last_insert_rowid=${info.lastInsertRowid}`);
     release(insert);
 
     const select = prepare(db, "select id, name, note, ratio, big_id from demo");
-    const rows = query(select);
+    const rows = all(select);
 
     for (const row of rows) {
       for (const value of row.values) {
