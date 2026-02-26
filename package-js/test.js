@@ -21,7 +21,6 @@ function equals(actual, expected, msg) {
   }
 }
 
-// todo: test select no col name
 // todo: test insert bigint in real col
 const test = () => {
   console.log('test')
@@ -87,6 +86,10 @@ const test = () => {
 
   num = db.exec('delete from demo where 1 = ?', [1])
   equals(num, 2n, 'delete 2 rows')
+
+  statement = db.prepare('select 3 where 1 = 1')
+  row = statement.one()
+  equals(row, { '3': 3n }, 'select 3 col name')
 
   db.close()
   equals(1, 1, 'close')

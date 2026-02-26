@@ -129,7 +129,7 @@ impl Manager {
                 prepared
                     .stmt
                     .column_name(index)
-                    .unwrap_or_default()
+                    .unwrap_or(&index.to_string())
                     .to_string()
             })
             .collect::<Vec<_>>();
