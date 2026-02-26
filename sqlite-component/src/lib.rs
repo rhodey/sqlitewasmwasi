@@ -17,7 +17,6 @@ use exports::wasm::wasi_sqlite::sqlite::{
 struct PreparedStatement {
     db: u32,
     stmt: rusqlite::Statement<'static>,
-    params: Vec<Value>,
 }
 
 #[derive(Default)]
@@ -40,20 +39,12 @@ impl Manager {
         Ok(id)
     }
 
-    fn prepare(
-        &mut self,
-        db: u32,
-        sql: &str,
-        params: Option<Vec<SqliteValue>>,
-    ) -> Result<u32, SqliteError> {
-        let params = values_from_sqlite(params.unwrap_or_default());
+    fn prepare(&mut self, db: u32, sql: &str) -> Result<u32, SqliteError> {
         let conn = self
             .dbs
             .get_mut(&db)
             .ok_or_else(|| invalid_handle("db", db))?;
         let stmt = conn.prepare(sql).map_err(map_error)?;
-        let expected_count = stmt.parameter_count();
-        validate_param_count(expected_count, params.len())?;
         // SAFETY: `Connection` values are stored in `self.dbs` and statements are always
         // removed before their owning connection is dropped (`close_db` removes statements
         // first). This makes the widened lifetime valid within `Manager`.
@@ -62,7 +53,7 @@ impl Manager {
         };
 
         let id = self.alloc_id();
-        self.statements.insert(id, PreparedStatement { db, stmt, params });
+        self.statements.insert(id, PreparedStatement { db, stmt });
         Ok(id)
     }
 
@@ -81,15 +72,20 @@ impl Manager {
             .map_err(map_error)
     }
 
-    fn run(&mut self, statement: u32) -> Result<SqliteRunInfo, SqliteError> {
+    fn run(
+        &mut self,
+        statement: u32,
+        params: Option<Vec<SqliteValue>>,
+    ) -> Result<SqliteRunInfo, SqliteError> {
         let prepared = self
             .statements
             .get_mut(&statement)
             .ok_or_else(|| invalid_handle("statement", statement))?;
-        validate_param_count(prepared.stmt.parameter_count(), prepared.params.len())?;
+        let params = values_from_sqlite(params.unwrap_or_default());
+        validate_param_count(prepared.stmt.parameter_count(), params.len())?;
         let changes = prepared
             .stmt
-            .execute(params_from_iter(prepared.params.iter()))
+            .execute(params_from_iter(params.iter()))
             .map_err(map_error)? as u64;
 
         let conn = self
@@ -104,21 +100,30 @@ impl Manager {
         })
     }
 
-    fn one(&mut self, statement: u32) -> Result<Option<SqliteRow>, SqliteError> {
-        Ok(self.all(statement)?.into_iter().next())
+    fn one(
+        &mut self,
+        statement: u32,
+        params: Option<Vec<SqliteValue>>,
+    ) -> Result<Option<SqliteRow>, SqliteError> {
+        Ok(self.all(statement, params)?.into_iter().next())
     }
 
-    fn all(&mut self, statement: u32) -> Result<Vec<SqliteRow>, SqliteError> {
+    fn all(
+        &mut self,
+        statement: u32,
+        params: Option<Vec<SqliteValue>>,
+    ) -> Result<Vec<SqliteRow>, SqliteError> {
         let prepared = self
             .statements
             .get_mut(&statement)
             .ok_or_else(|| invalid_handle("statement", statement))?;
 
-        validate_param_count(prepared.stmt.parameter_count(), prepared.params.len())?;
+        let params = values_from_sqlite(params.unwrap_or_default());
+        validate_param_count(prepared.stmt.parameter_count(), params.len())?;
         let col_count = prepared.stmt.column_count();
         let mut rows = prepared
             .stmt
-            .query(params_from_iter(prepared.params.iter()))
+            .query(params_from_iter(params.iter()))
             .map_err(map_error)?;
 
         let mut out = Vec::new();
@@ -230,20 +235,26 @@ impl Guest for Component {
         with_manager(|manager| manager.exec(db, &sql, params))
     }
 
-    fn prepare(db: u32, sql: String, params: Option<Vec<SqliteValue>>) -> Result<u32, SqliteError> {
-        with_manager(|manager| manager.prepare(db, &sql, params))
+    fn prepare(db: u32, sql: String) -> Result<u32, SqliteError> {
+        with_manager(|manager| manager.prepare(db, &sql))
     }
 
-    fn run(statement: u32) -> Result<SqliteRunInfo, SqliteError> {
-        with_manager(|manager| manager.run(statement))
+    fn run(statement: u32, params: Option<Vec<SqliteValue>>) -> Result<SqliteRunInfo, SqliteError> {
+        with_manager(|manager| manager.run(statement, params))
     }
 
-    fn one(statement: u32) -> Result<Option<SqliteRow>, SqliteError> {
-        with_manager(|manager| manager.one(statement))
+    fn one(
+        statement: u32,
+        params: Option<Vec<SqliteValue>>,
+    ) -> Result<Option<SqliteRow>, SqliteError> {
+        with_manager(|manager| manager.one(statement, params))
     }
 
-    fn all(statement: u32) -> Result<Vec<SqliteRow>, SqliteError> {
-        with_manager(|manager| manager.all(statement))
+    fn all(
+        statement: u32,
+        params: Option<Vec<SqliteValue>>,
+    ) -> Result<Vec<SqliteRow>, SqliteError> {
+        with_manager(|manager| manager.all(statement, params))
     }
 
     fn close(db: u32) -> Result<(), SqliteError> {
@@ -271,9 +282,11 @@ mod tests {
             .expect("create should run");
 
         let insert = manager
-            .prepare(
-                db,
-                "insert into items values (?, ?), (?, ?)",
+            .prepare(db, "insert into items values (?, ?), (?, ?)")
+            .expect("prepare insert should work");
+        let info = manager
+            .run(
+                insert,
                 Some(vec![
                     SqliteValue::Integer(1),
                     SqliteValue::Text("apple".to_string()),
@@ -281,19 +294,16 @@ mod tests {
                     SqliteValue::Text("pear".to_string()),
                 ]),
             )
-            .expect("prepare insert should work");
-        let info = manager.run(insert).expect("insert should run");
+            .expect("insert should run");
         assert_eq!(info.changes, 2);
         assert!(info.last_insert_rowid >= 1);
 
         let select = manager
-            .prepare(
-                db,
-                "select id, name from items where id > ? order by id",
-                Some(vec![SqliteValue::Integer(0)]),
-            )
+            .prepare(db, "select id, name from items where id > ? order by id")
             .expect("prepare select should work");
-        let rows = manager.all(select).expect("query should run");
+        let rows = manager
+            .all(select, Some(vec![SqliteValue::Integer(0)]))
+            .expect("query should run");
 
         assert_eq!(rows.len(), 2);
         manager.close_db(db).expect("close db should work");

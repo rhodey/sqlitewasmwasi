@@ -47,11 +47,11 @@ record sqlite-run-info {
 }
 
 open: func(path: string) -> result<db-handle, sqlite-error>
-prepare: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<statement-handle, sqlite-error>
+prepare: func(db: db-handle, sql: string) -> result<statement-handle, sqlite-error>
 exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<_, sqlite-error>
-run: func(statement: statement-handle) -> result<sqlite-run-info, sqlite-error>
-one: func(statement: statement-handle) -> result<option<sqlite-row>, sqlite-error>
-all: func(statement: statement-handle) -> result<list<sqlite-row>, sqlite-error>
+run: func(statement: statement-handle, params: option<list<sqlite-value>>) -> result<sqlite-run-info, sqlite-error>
+one: func(statement: statement-handle, params: option<list<sqlite-value>>) -> result<option<sqlite-row>, sqlite-error>
+all: func(statement: statement-handle, params: option<list<sqlite-value>>) -> result<list<sqlite-row>, sqlite-error>
 close: func(db: db-handle) -> result<_, sqlite-error>
 release: func(statement: statement-handle) -> result<_, sqlite-error>
 ```

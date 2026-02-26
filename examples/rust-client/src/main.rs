@@ -29,19 +29,18 @@ fn main() {
     let insert = prepare(
         db,
         "insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)",
-        Some(&insert_params),
     )
     .expect("prepare insert");
-    let info = run(insert).expect("run insert");
+    let info = run(insert, Some(&insert_params)).expect("run insert");
     println!(
         "changes={} last_insert_rowid={}",
         info.changes, info.last_insert_rowid
     );
     release(insert).expect("release insert");
 
-    let select = prepare(db, "select id, name, note, ratio, big_id from demo", None)
-        .expect("prepare select");
-    let rows = all(select).expect("query rows");
+    let select =
+        prepare(db, "select id, name, note, ratio, big_id from demo").expect("prepare select");
+    let rows = all(select, None).expect("query rows");
 
     for row in rows {
         for value in row.values {
@@ -60,10 +59,9 @@ fn main() {
     let select_one = prepare(
         db,
         "select id, name, note, ratio, big_id from demo where id = ?",
-        Some(&[SqliteValue::Integer(1)]),
     )
     .expect("prepare select one");
-    let row = one(select_one)
+    let row = one(select_one, Some(&[SqliteValue::Integer(1)]))
         .expect("query one row")
         .expect("expected one() to return a row");
     assert_eq!(row.values.len(), 5, "expected one() to return 5 columns");
