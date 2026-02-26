@@ -108,7 +108,6 @@ const test = () => {
     console.log('fail', 'insert text as real throws')
   } catch (err) {
     console.log('pass', 'insert text as real throws')
-    console.log(err.code, err.message, '=> good')
   }
 
   statement = db.prepare('select * from nums order by id')
