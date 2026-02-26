@@ -56,5 +56,6 @@ grep -q '^text=hello from rust$' <<<"$OUTPUT"
 grep -q '^null$' <<<"$OUTPUT"
 grep -q '^real=3.25$' <<<"$OUTPUT"
 grep -q '^int=9007199254740993$' <<<"$OUTPUT"
+grep -q '^one() got single row back$' <<<"$OUTPUT"
 
 echo "wasmtime output validation passed"

@@ -7,6 +7,7 @@ import {
   prepare,
   exec,
   all,
+  one,
   run as runStatement,
   release,
   close,
@@ -66,6 +67,18 @@ export const run = {
     }
 
     release(select);
+
+    const selectOne = prepare(db, "select id, name, note, ratio, big_id from demo where id = 1");
+    const singleRow = one(selectOne);
+    if (singleRow === undefined) {
+      throw new Error("expected one() to return a row");
+    }
+    if (singleRow.values.length !== 5) {
+      throw new Error(`expected one() to return 5 columns, got ${singleRow.values.length}`);
+    }
+    console.log("one() got single row back");
+    release(selectOne);
+
     close(db);
   },
 };

@@ -6,7 +6,7 @@ mod bindings {
 }
 
 use bindings::wasm::wasi_sqlite::sqlite::{
-    all, close, exec, open, prepare, release, run, SqliteValue,
+    all, close, exec, one, open, prepare, release, run, SqliteValue,
 };
 
 fn main() {
@@ -47,5 +47,18 @@ fn main() {
     }
 
     release(select).expect("release select");
+
+    let select_one = prepare(
+        db,
+        "select id, name, note, ratio, big_id from demo where id = 1",
+    )
+    .expect("prepare select one");
+    let row = one(select_one)
+        .expect("query one row")
+        .expect("expected one() to return a row");
+    println!("one() got single row back");
+    assert_eq!(row.values.len(), 5, "expected one() to return 5 columns");
+    release(select_one).expect("release select one");
+
     close(db).expect("close db");
 }
