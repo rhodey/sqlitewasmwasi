@@ -32,12 +32,14 @@ const test = () => {
   let statement = db.prepare('insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)')
   let info = statement.run([1, 'hello from rust', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
+  equals(info.lastInsertRowid, 1n, 'insert row id')
   equals(true, statement.release(), 'release true')
   equals(false, statement.release(), 'release false')
 
   statement = db.prepare('insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)')
   info = statement.run([2, 'hello from rust', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
+  equals(info.lastInsertRowid, 2n, 'insert row id')
   equals(true, statement.release(), 'release true')
   equals(false, statement.release(), 'release false')
 
@@ -74,6 +76,9 @@ const test = () => {
   statement = db.prepare('select id, name, note, ratio, big_id from demo where id = ?')
   rows = statement.all([3])
   equals(rows.length, 0, 'select 0 rows')
+
+  num = db.exec('delete from demo where 1 = ?', [1])
+  equals(num, 2n, 'delete 2 rows')
 
   db.close()
   equals(1, 1, 'close')
