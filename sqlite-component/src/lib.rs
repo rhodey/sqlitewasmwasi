@@ -159,11 +159,11 @@ impl Guest for Component {
         manager().query(statement)
     }
 
-    fn close_db(db: u32) -> Result<(), SqliteError> {
+    fn close(db: u32) -> Result<(), SqliteError> {
         manager().close_db(db)
     }
 
-    fn close_statement(statement: u32) -> Result<(), SqliteError> {
+    fn release(statement: u32) -> Result<(), SqliteError> {
         manager().close_statement(statement)
     }
 }

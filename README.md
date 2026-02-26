@@ -44,8 +44,8 @@ The interface is defined in `wit/sqlite.wit`.
 open: func(path: string) -> result<db-handle, sqlite-error>
 prepare: func(db: db-handle, sql: string) -> result<statement-handle, sqlite-error>
 query: func(statement: statement-handle) -> result<list<sqlite-row>, sqlite-error>
-close-db: func(db: db-handle) -> result<_, sqlite-error>
-close-statement: func(statement: statement-handle) -> result<_, sqlite-error>
+close: func(db: db-handle) -> result<_, sqlite-error>
+release: func(statement: statement-handle) -> result<_, sqlite-error>
 ```
 
 Rows are returned as `list<sqlite-value>` where `sqlite-value` supports null/int/real/text/blob.
@@ -78,6 +78,9 @@ Expected output includes:
 ```text
 int=1
 text=hello from rust
+null
+real=3.25
+int=9007199254740993
 ```
 
 Run the JS ComponentizeJS client validation script that:
@@ -96,6 +99,9 @@ Expected output includes:
 ```text
 int=1
 text=hello from rust
+null
+real=3.25
+int=9007199254740993
 ```
 
 Tooling expected:

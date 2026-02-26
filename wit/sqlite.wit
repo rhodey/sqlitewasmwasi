@@ -24,8 +24,8 @@ interface sqlite {
   open: func(path: string) -> result<db-handle, sqlite-error>;
   prepare: func(db: db-handle, sql: string) -> result<statement-handle, sqlite-error>;
   query: func(statement: statement-handle) -> result<list<sqlite-row>, sqlite-error>;
-  close-db: func(db: db-handle) -> result<_, sqlite-error>;
-  close-statement: func(statement: statement-handle) -> result<_, sqlite-error>;
+  close: func(db: db-handle) -> result<_, sqlite-error>;
+  release: func(statement: statement-handle) -> result<_, sqlite-error>;
 }
 
 world sqlite-component {
