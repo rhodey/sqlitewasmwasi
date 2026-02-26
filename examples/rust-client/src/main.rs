@@ -84,11 +84,11 @@ fn main() {
             .expect("query one row")
             .expect("expected one() to return a row");
         assert_eq!(row.columns.len(), 5, "expected one() to return 5 columns");
-        assert_eq!(
-            value_by_name(&row, "name"),
-            Some(&SqliteValue::Text("hello from rust".to_string())),
-            "expected to look up values by column name"
-        );
+        let name = value_by_name(&row, "name").expect("name column should exist");
+        match name {
+            SqliteValue::Text(value) if value == "hello from rust" => {}
+            _ => panic!("expected name column to be text=hello from rust"),
+        }
         println!("one() got single row back");
         assert!(
             select_one.release(),
