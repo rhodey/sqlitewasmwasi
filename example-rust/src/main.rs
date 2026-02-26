@@ -1,6 +1,6 @@
 mod bindings {
     wit_bindgen::generate!({
-        path: "../../wit",
+        path: "../wit",
         world: "sqlite-client",
     });
 }
