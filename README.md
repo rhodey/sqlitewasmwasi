@@ -34,7 +34,7 @@ I think it is important that we somehow compile using a WASM WASI compatible lib
   - close DB
 - A Rust implementation in `sqlite-component` using `rusqlite` (`libsqlite3-sys` with `bundled` SQLite).
 - A Rust WASI P2 client example (`examples/rust-client`).
-- A JS WASI P2 client example intended for ComponentizeJS (`examples/js-client`).
+- A JS WASI P2 client example implemented with ComponentizeJS (`examples/js-client`).
 
 ## WIT interface
 
@@ -71,6 +71,24 @@ Run the scripted test that:
 
 ```bash
 ./scripts/test-wasmtime-rust-client.sh
+```
+
+Expected output includes:
+
+```text
+int=1
+text=hello from rust
+```
+
+Run the JS ComponentizeJS client validation script that:
+- builds the SQLite component for `wasm32-wasip2`,
+- builds the JS client component with ComponentizeJS,
+- composes them into one component,
+- runs with `wasmtime`, and
+- verifies stdout includes the expected log lines.
+
+```bash
+./scripts/test-wasmtime-js-client.sh
 ```
 
 Expected output includes:

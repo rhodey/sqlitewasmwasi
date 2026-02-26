@@ -35,3 +35,10 @@ world sqlite-component {
 world sqlite-client {
   import sqlite;
 }
+
+
+
+world sqlite-command-client {
+  import sqlite;
+  export wasi:cli/run@0.2.3;
+}
