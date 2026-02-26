@@ -124,6 +124,15 @@ impl Manager {
         let params = values_from_sqlite(params.unwrap_or_default());
         validate_param_count(prepared.stmt.parameter_count(), params.len())?;
         let col_count = prepared.stmt.column_count();
+        let columns = (0..col_count)
+            .map(|index| {
+                prepared
+                    .stmt
+                    .column_name(index)
+                    .unwrap_or_default()
+                    .to_string()
+            })
+            .collect::<Vec<_>>();
         let mut rows = prepared
             .stmt
             .query(params_from_iter(params.iter()))
@@ -136,7 +145,10 @@ impl Manager {
                 let value = row.get_ref(index).map_err(map_error)?;
                 values.push(value_from_ref(value));
             }
-            out.push(SqliteRow { values });
+            out.push(SqliteRow {
+                columns: columns.clone(),
+                values,
+            });
         }
         Ok(out)
     }
@@ -311,7 +323,14 @@ export!(Component);
 
 #[cfg(test)]
 mod tests {
-    use super::{Manager, SqliteValue};
+    use super::{Manager, SqliteRow, SqliteValue};
+
+    fn value_by_name<'a>(row: &'a SqliteRow, name: &str) -> Option<&'a SqliteValue> {
+        row.columns
+            .iter()
+            .position(|column| column == name)
+            .and_then(|index| row.values.get(index))
+    }
 
     #[test]
     fn end_to_end_query_works() {
@@ -347,6 +366,17 @@ mod tests {
             .expect("query should run");
 
         assert_eq!(rows.len(), 2);
+        for row in &rows {
+            println!("id={:?}", value_by_name(row, "id"));
+            println!("name={:?}", value_by_name(row, "name"));
+        }
+
+        let row = rows.first().expect("should have at least one row");
+        assert_eq!(value_by_name(row, "id"), Some(&SqliteValue::Integer(1)));
+        assert_eq!(
+            value_by_name(row, "name"),
+            Some(&SqliteValue::Text("apple".to_string()))
+        );
         manager.close_db(db).expect("close db should work");
     }
 }

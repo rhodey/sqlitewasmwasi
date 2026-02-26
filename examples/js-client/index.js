@@ -4,9 +4,9 @@
 
 import { open, prepare, exec, close } from "wasm:wasi-sqlite/sqlite";
 
-const printSqliteValue = (value) => {
+const printSqliteValue = (value, label) => {
   if (value === null) {
-    console.log("null");
+    console.log(`${label}=null`);
     return;
   }
 
@@ -15,23 +15,31 @@ const printSqliteValue = (value) => {
 
   switch (tag) {
     case "null":
-      console.log("null");
+      console.log(`${label}=null`);
       break;
     case "integer":
-      console.log(`int=${val}`);
+      console.log(`${label}=int=${val}`);
       break;
     case "real":
-      console.log(`real=${val}`);
+      console.log(`${label}=real=${val}`);
       break;
     case "text":
-      console.log(`text=${val}`);
+      console.log(`${label}=text=${val}`);
       break;
     case "blob":
-      console.log(`blob=${val.length} bytes`);
+      console.log(`${label}=blob=${val.length} bytes`);
       break;
     default:
       throw new Error(`unknown sqlite-value tag: ${tag}`);
   }
+};
+
+const valueByName = (row, name) => {
+  const index = row.columns.indexOf(name);
+  if (index === -1) {
+    return undefined;
+  }
+  return row.values[index];
 };
 
 export const run = {
@@ -65,8 +73,12 @@ export const run = {
       const rows = select.all(undefined);
 
       for (const row of rows) {
-        for (const value of row.values) {
-          printSqliteValue(value);
+        for (const column of ["id", "name", "note", "ratio", "big_id"]) {
+          const value = valueByName(row, column);
+          if (value === undefined) {
+            throw new Error(`expected ${column} to exist in row`);
+          }
+          printSqliteValue(value, column);
         }
       }
       if (!select.release()) {
@@ -82,8 +94,12 @@ export const run = {
       if (singleRow === undefined) {
         throw new Error("expected one() to return a row");
       }
-      if (singleRow.values.length !== 5) {
-        throw new Error(`expected one() to return 5 columns, got ${singleRow.values.length}`);
+      if (singleRow.columns.length !== 5) {
+        throw new Error(`expected one() to return 5 columns, got ${singleRow.columns.length}`);
+      }
+      const name = valueByName(singleRow, "name");
+      if (name?.tag !== "text" || name.val !== "hello from rust") {
+        throw new Error("expected to look up one() value by column name");
       }
       console.log("one() got single row back");
       if (!selectOne.release()) {

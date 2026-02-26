@@ -5,7 +5,14 @@ mod bindings {
     });
 }
 
-use bindings::wasm::wasi_sqlite::sqlite::{close, exec, open, prepare, SqliteValue};
+use bindings::wasm::wasi_sqlite::sqlite::{close, exec, open, prepare, SqliteRow, SqliteValue};
+
+fn value_by_name<'a>(row: &'a SqliteRow, name: &str) -> Option<&'a SqliteValue> {
+    row.columns
+        .iter()
+        .position(|column| column == name)
+        .and_then(|index| row.values.get(index))
+}
 
 fn main() {
     let db = open("file:/workspace/rust-client.db?vfs=unix-dotfile").expect("open db");
@@ -49,13 +56,14 @@ fn main() {
         let rows = select.all(None).expect("query rows");
 
         for row in rows {
-            for value in row.values {
+            for column in ["id", "name", "note", "ratio", "big_id"] {
+                let value = value_by_name(&row, column).expect("column should exist");
                 match value {
-                    SqliteValue::Null => println!("null"),
-                    SqliteValue::Integer(v) => println!("int={v}"),
-                    SqliteValue::Text(v) => println!("text={v}"),
-                    SqliteValue::Real(v) => println!("real={v}"),
-                    other => println!("other={other:?}"),
+                    SqliteValue::Null => println!("{column}=null"),
+                    SqliteValue::Integer(v) => println!("{column}=int={v}"),
+                    SqliteValue::Text(v) => println!("{column}=text={v}"),
+                    SqliteValue::Real(v) => println!("{column}=real={v}"),
+                    other => println!("{column}=other={other:?}"),
                 }
             }
         }
@@ -75,7 +83,12 @@ fn main() {
             .one(Some(&[SqliteValue::Integer(1)]))
             .expect("query one row")
             .expect("expected one() to return a row");
-        assert_eq!(row.values.len(), 5, "expected one() to return 5 columns");
+        assert_eq!(row.columns.len(), 5, "expected one() to return 5 columns");
+        assert_eq!(
+            value_by_name(&row, "name"),
+            Some(&SqliteValue::Text("hello from rust".to_string())),
+            "expected to look up values by column name"
+        );
         println!("one() got single row back");
         assert!(
             select_one.release(),

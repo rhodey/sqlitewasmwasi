@@ -10,6 +10,7 @@ interface sqlite {
   }
 
   record sqlite-row {
+    columns: list<string>,
     values: list<sqlite-value>,
   }
 
