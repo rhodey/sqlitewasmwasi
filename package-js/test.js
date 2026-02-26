@@ -21,7 +21,6 @@ function equals(actual, expected, msg) {
   }
 }
 
-// todo: test insert bigint in real col
 const test = () => {
   console.log('test')
   const db = open('file:/app/test.js.db?vfs=unix-dotfile')
@@ -80,17 +79,17 @@ const test = () => {
 
   num = db.exec('update demo set id = 3 where id = ?', [1])
   equals(num, 1n, 'update 1 rows')
-
   num = db.exec('update demo set id = 3 where id = ?', [1])
   equals(num, 0n, 'update 0 rows')
-
   num = db.exec('delete from demo where 1 = ?', [1])
   equals(num, 2n, 'delete 2 rows')
 
+  // without names
   statement = db.prepare('select 3 where 1 = 1')
   row = statement.one()
   equals(row, { '3': 3n }, 'select 3 col name')
 
+  // strict types
   db.exec('drop table if exists nums')
   db.exec('create table nums (id integer, ratio real) strict')
   statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
@@ -106,7 +105,7 @@ const test = () => {
     console.log('fail', 'insert text as real throws')
   } catch (err) {
     console.log('pass', 'insert text as real throws')
-    console.log(err.code, err.message)
+    console.log(err.code, err.message, '=> good')
   }
 
   statement = db.prepare('select * from nums order by id')
@@ -116,6 +115,19 @@ const test = () => {
   equals(rows[1], { id: 2n, ratio: 2.0 }, 'select row id 2')
   equals(rows[2], { id: 3n, ratio: 3.0 }, 'select row id 3')
 
+  // not strict types
+  db.exec('drop table if exists nums')
+  db.exec('create table nums (id integer, ratio real)')
+  statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
+  info = statement.run([1, 'abc'])
+  equals(info.changes, 1n, 'insert 1 real')
+
+  statement = db.prepare('select * from nums order by id')
+  rows = statement.all()
+  equals(rows.length, 1, 'select 1 rows')
+  equals(rows[0], { id: 1n, ratio: 'abc' }, 'select row id 1')
+
+  // done
   db.close()
   equals(1, 1, 'close')
 }
