@@ -62,23 +62,20 @@ const test = () => {
   row = statement.one()
   equals(row, null, 'select 1 row NULL')
 
-  statement = db.prepare('select id, name, note, ratio, big_id from demo')
+  statement = db.prepare('select id, name, note, ratio, big_id from demo order by id')
   let rows = statement.all()
-  for (const row of rows) {
-    console.log(123, row)
-  }
+  equals(rows.length, 2, 'select 2 rows')
+  equals(rows[0], obj1, 'select row id 1')
+  equals(rows[1], obj2, 'select row id 2')
 
-  statement = db.prepare('select id, name, note, ratio, big_id from demo where 1 = ?')
+  statement = db.prepare('select id, name, note, ratio, big_id from demo where id = ?')
   rows = statement.all([1])
-  for (const row of rows) {
-    console.log(456, row)
-  }
+  equals(rows.length, 1, 'select 1 rows')
+  equals(rows[0], obj1, 'select row id 1')
 
-  statement = db.prepare('select id, name, note, ratio, big_id from demo where 1 = ?')
+  statement = db.prepare('select id, name, note, ratio, big_id from demo where id = ?')
   rows = statement.all([3])
-  for (const row of rows) {
-    console.log(789, row)
-  }
+  equals(rows.length, 0, 'select 0 rows')
 
   db.close()
   equals(1, 1, 'close')
