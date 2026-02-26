@@ -16,7 +16,7 @@ use exports::wasm::wasi_sqlite::sqlite::{
 
 struct PreparedStatement {
     db: u32,
-    sql: String,
+    stmt: rusqlite::Statement<'static>,
     params: Vec<Value>,
 }
 
@@ -47,22 +47,22 @@ impl Manager {
         params: Option<Vec<SqliteValue>>,
     ) -> Result<u32, SqliteError> {
         let params = values_from_sqlite(params.unwrap_or_default());
-        {
-            let conn = self.dbs.get(&db).ok_or_else(|| invalid_handle("db", db))?;
-            let stmt = conn.prepare_cached(sql).map_err(map_error)?;
-            let expected_count = stmt.parameter_count();
-            validate_param_count(expected_count, params.len())?;
-        }
+        let conn = self
+            .dbs
+            .get_mut(&db)
+            .ok_or_else(|| invalid_handle("db", db))?;
+        let stmt = conn.prepare(sql).map_err(map_error)?;
+        let expected_count = stmt.parameter_count();
+        validate_param_count(expected_count, params.len())?;
+        // SAFETY: `Connection` values are stored in `self.dbs` and statements are always
+        // removed before their owning connection is dropped (`close_db` removes statements
+        // first). This makes the widened lifetime valid within `Manager`.
+        let stmt = unsafe {
+            std::mem::transmute::<rusqlite::Statement<'_>, rusqlite::Statement<'static>>(stmt)
+        };
 
         let id = self.alloc_id();
-        self.statements.insert(
-            id,
-            PreparedStatement {
-                db,
-                sql: sql.to_string(),
-                params,
-            },
-        );
+        self.statements.insert(id, PreparedStatement { db, stmt, params });
         Ok(id)
     }
 
@@ -84,19 +84,18 @@ impl Manager {
     fn run(&mut self, statement: u32) -> Result<SqliteRunInfo, SqliteError> {
         let prepared = self
             .statements
-            .get(&statement)
+            .get_mut(&statement)
             .ok_or_else(|| invalid_handle("statement", statement))?;
+        validate_param_count(prepared.stmt.parameter_count(), prepared.params.len())?;
+        let changes = prepared
+            .stmt
+            .execute(params_from_iter(prepared.params.iter()))
+            .map_err(map_error)? as u64;
+
         let conn = self
             .dbs
             .get(&prepared.db)
             .ok_or_else(|| invalid_handle("db", prepared.db))?;
-        let mut stmt = conn.prepare_cached(&prepared.sql).map_err(map_error)?;
-        validate_param_count(stmt.parameter_count(), prepared.params.len())?;
-        let changes = stmt
-            .execute(params_from_iter(prepared.params.iter()))
-            .map_err(map_error)?;
-        drop(stmt);
-        let changes = changes as u64;
         let last_insert_rowid = conn.last_insert_rowid();
 
         Ok(SqliteRunInfo {
@@ -105,24 +104,20 @@ impl Manager {
         })
     }
 
-    fn one(&self, statement: u32) -> Result<Option<SqliteRow>, SqliteError> {
+    fn one(&mut self, statement: u32) -> Result<Option<SqliteRow>, SqliteError> {
         Ok(self.all(statement)?.into_iter().next())
     }
 
-    fn all(&self, statement: u32) -> Result<Vec<SqliteRow>, SqliteError> {
+    fn all(&mut self, statement: u32) -> Result<Vec<SqliteRow>, SqliteError> {
         let prepared = self
             .statements
-            .get(&statement)
+            .get_mut(&statement)
             .ok_or_else(|| invalid_handle("statement", statement))?;
 
-        let conn = self
-            .dbs
-            .get(&prepared.db)
-            .ok_or_else(|| invalid_handle("db", prepared.db))?;
-        let mut stmt = conn.prepare_cached(&prepared.sql).map_err(map_error)?;
-        validate_param_count(stmt.parameter_count(), prepared.params.len())?;
-        let col_count = stmt.column_count();
-        let mut rows = stmt
+        validate_param_count(prepared.stmt.parameter_count(), prepared.params.len())?;
+        let col_count = prepared.stmt.column_count();
+        let mut rows = prepared
+            .stmt
             .query(params_from_iter(prepared.params.iter()))
             .map_err(map_error)?;
 
@@ -139,9 +134,9 @@ impl Manager {
     }
 
     fn close_db(&mut self, db: u32) -> Result<(), SqliteError> {
-        self.dbs
-            .remove(&db)
-            .ok_or_else(|| invalid_handle("db", db))?;
+        if !self.dbs.contains_key(&db) {
+            return Err(invalid_handle("db", db));
+        }
         let ids_to_remove = self
             .statements
             .iter()
@@ -150,6 +145,7 @@ impl Manager {
         for id in ids_to_remove {
             self.statements.remove(&id);
         }
+        self.dbs.remove(&db);
         Ok(())
     }
 
