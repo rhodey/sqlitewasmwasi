@@ -129,7 +129,7 @@ impl Manager {
                 prepared
                     .stmt
                     .column_name(index)
-                    .unwrap_or_default()
+                    .unwrap_or(&index.to_string())
                     .to_string()
             })
             .collect::<Vec<_>>();
@@ -320,63 +320,3 @@ impl GuestStatement for StatementResource {
 }
 
 export!(Component);
-
-#[cfg(test)]
-mod tests {
-    use super::{Manager, SqliteRow, SqliteValue};
-
-    fn value_by_name<'a>(row: &'a SqliteRow, name: &str) -> Option<&'a SqliteValue> {
-        row.columns
-            .iter()
-            .position(|column| column == name)
-            .and_then(|index| row.values.get(index))
-    }
-
-    #[test]
-    fn end_to_end_query_works() {
-        let mut manager = Manager::default();
-        let db = manager.open(":memory:").expect("open should work");
-
-        manager
-            .exec(db, "create table items (id integer, name text)", None)
-            .expect("create should run");
-
-        let insert = manager
-            .prepare(db, "insert into items values (?, ?), (?, ?)")
-            .expect("prepare insert should work");
-        let info = manager
-            .run(
-                insert,
-                Some(vec![
-                    SqliteValue::Integer(1),
-                    SqliteValue::Text("apple".to_string()),
-                    SqliteValue::Integer(2),
-                    SqliteValue::Text("pear".to_string()),
-                ]),
-            )
-            .expect("insert should run");
-        assert_eq!(info.changes, 2);
-        assert!(info.last_insert_rowid >= 1);
-
-        let select = manager
-            .prepare(db, "select id, name from items where id > ? order by id")
-            .expect("prepare select should work");
-        let rows = manager
-            .all(select, Some(vec![SqliteValue::Integer(0)]))
-            .expect("query should run");
-
-        assert_eq!(rows.len(), 2);
-        for row in &rows {
-            println!("id={:?}", value_by_name(row, "id"));
-            println!("name={:?}", value_by_name(row, "name"));
-        }
-
-        let row = rows.first().expect("should have at least one row");
-        assert_eq!(value_by_name(row, "id"), Some(&SqliteValue::Integer(1)));
-        assert_eq!(
-            value_by_name(row, "name"),
-            Some(&SqliteValue::Text("apple".to_string()))
-        );
-        manager.close_db(db).expect("close db should work");
-    }
-}

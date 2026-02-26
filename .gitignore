@@ -1,5 +1,7 @@
 .env*
 *\.swp
 target/
+package-js/dist/
+package-js/node_modules/
 example-js/node_modules/
-mount/
+app/
