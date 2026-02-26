@@ -46,6 +46,11 @@ record sqlite-run-info {
   last-insert-rowid: s64
 }
 
+record sqlite-row {
+  columns: list<string>
+  values: list<sqlite-value>
+}
+
 open: func(path: string) -> result<db-handle, sqlite-error>
 resource statement {
   run: func(params: option<list<sqlite-value>>) -> result<sqlite-run-info, sqlite-error>
@@ -59,7 +64,7 @@ exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> re
 close: func(db: db-handle) -> result<_, sqlite-error>
 ```
 
-Rows are returned as `list<sqlite-value>` where `sqlite-value` supports null/int/real/text/blob.
+Rows are returned with both `columns: list<string>` and `values: list<sqlite-value>`, so callers can look up values by column name.
 
 Prepared statements are now a WIT `resource`, so callers get RAII-like cleanup semantics: statements are released when Rust drops them or when JS garbage collection finalizes the resource handle. The resource also exposes `release()` for eager/manual cleanup when desired; it returns `true` the first time and `false` on subsequent calls.
 
@@ -92,11 +97,11 @@ The script creates/pre-opens a host directory for WASI and runs the client again
 Expected output includes:
 
 ```text
-int=1
-text=hello from rust
-null
-real=3.25
-int=9007199254740993
+id=int=1
+name=text=hello from rust
+note=null
+ratio=real=3.25
+big_id=int=9007199254740993
 ```
 
 Run the JS ComponentizeJS client validation script that:
@@ -116,11 +121,11 @@ The script creates/pre-opens a host directory for WASI and runs the client again
 Expected output includes:
 
 ```text
-int=1
-text=hello from rust
-null
-real=3.25
-int=9007199254740993
+id=int=1
+name=text=hello from rust
+note=null
+ratio=real=3.25
+big_id=int=9007199254740993
 ```
 
 Tooling expected:
