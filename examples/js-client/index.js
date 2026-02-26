@@ -45,7 +45,9 @@ const printSqliteValue = (value) => {
 
 export const run = {
   run() {
-    const db = open(":memory:");
+    const db = open("file:/workspace/js-client.db?vfs=unix-dotfile");
+
+    exec(db, "drop table if exists demo", undefined);
 
     exec(db, "create table demo (id integer, name text, note text, ratio real, big_id integer)", undefined);
 

@@ -77,6 +77,9 @@ Run the scripted test that:
 - runs with `wasmtime`, and
 - verifies stdout includes the expected log lines.
 
+The script creates/pre-opens a host directory for WASI and runs the client against
+`file:/workspace/rust-client.db?vfs=unix-dotfile`.
+
 ```bash
 ./scripts/test-wasmtime-rust-client.sh
 ```
@@ -97,6 +100,9 @@ Run the JS ComponentizeJS client validation script that:
 - composes them into one component,
 - runs with `wasmtime`, and
 - verifies stdout includes the expected log lines.
+
+The script creates/pre-opens a host directory for WASI and runs the client against
+`file:/workspace/js-client.db?vfs=unix-dotfile`.
 
 ```bash
 ./scripts/test-wasmtime-js-client.sh
