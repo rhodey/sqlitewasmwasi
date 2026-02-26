@@ -21,6 +21,9 @@ function equals(actual, expected, msg) {
   }
 }
 
+// todo: test blob type
+// todo: test use after close
+// todo: test use after release
 const test = () => {
   console.log('test')
   const db = open('file:/app/test.js.db?vfs=unix-dotfile')

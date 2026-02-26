@@ -1,5 +1,6 @@
 import { open as openDb, exec, prepare, close } from 'wasm:sqlite-wasi/sqlite'
 
+// todo: blob
 const valuesToParams = (arr) => {
   return arr.map((val, idx) => {
     if (typeof val === 'bigint') {
