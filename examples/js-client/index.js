@@ -52,20 +52,19 @@ export const run = {
     const insert = prepare(
       db,
       "insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)",
-      [
+    );
+    const info = runStatement(insert, [
         { tag: "integer", val: 1 },
         { tag: "text", val: "hello from rust" },
         { tag: "null" },
         { tag: "real", val: 3.25 },
         { tag: "integer", val: 9007199254740993n },
-      ],
-    );
-    const info = runStatement(insert);
+      ]);
     console.log(`changes=${info.changes} last_insert_rowid=${info.lastInsertRowid}`);
     release(insert);
 
-    const select = prepare(db, "select id, name, note, ratio, big_id from demo", undefined);
-    const rows = all(select);
+    const select = prepare(db, "select id, name, note, ratio, big_id from demo");
+    const rows = all(select, undefined);
 
     for (const row of rows) {
       for (const value of row.values) {
@@ -75,10 +74,10 @@ export const run = {
 
     release(select);
 
-    const selectOne = prepare(db, "select id, name, note, ratio, big_id from demo where id = ?", [
+    const selectOne = prepare(db, "select id, name, note, ratio, big_id from demo where id = ?");
+    const singleRow = one(selectOne, [
       { tag: "integer", val: 1 },
     ]);
-    const singleRow = one(selectOne);
     if (singleRow === undefined) {
       throw new Error("expected one() to return a row");
     }
