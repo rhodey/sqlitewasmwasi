@@ -77,6 +77,12 @@ const test = () => {
   rows = statement.all([3])
   equals(rows.length, 0, 'select 0 rows')
 
+  num = db.exec('update demo set id = 3 where id = ?', [1])
+  equals(num, 1n, 'update 1 rows')
+
+  num = db.exec('update demo set id = 3 where id = ?', [1])
+  equals(num, 0n, 'update 0 rows')
+
   num = db.exec('delete from demo where 1 = ?', [1])
   equals(num, 2n, 'delete 2 rows')
 
