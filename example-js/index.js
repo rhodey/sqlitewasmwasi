@@ -1,7 +1,3 @@
-// Build this file as a WASI P2 component with ComponentizeJS.
-// The generated component imports `wasm:wasi-sqlite/sqlite` and
-// exports `wasi:cli/run@0.2.3#run`.
-
 import { open, prepare, exec, close } from "wasm:sqlite-wasi/sqlite";
 
 const printSqliteValue = (value, label) => {
