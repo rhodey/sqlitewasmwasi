@@ -20,6 +20,6 @@ just build-js run-js
 ```
 
 ## License
-mike@rhodey.org
+hello@lock.host
 
 MIT
