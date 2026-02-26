@@ -53,5 +53,8 @@ printf '%s\n' "$OUTPUT"
 
 grep -q '^int=1$' <<<"$OUTPUT"
 grep -q '^text=hello from rust$' <<<"$OUTPUT"
+grep -q '^null$' <<<"$OUTPUT"
+grep -q '^real=3.25$' <<<"$OUTPUT"
+grep -q '^int=9007199254740993$' <<<"$OUTPUT"
 
 echo "wasmtime output validation passed"
