@@ -24,7 +24,7 @@ const rowsToObjects = (rows) => {
     const obj = {}
     for (let c = 0; c < row.values.length; c++) {
       const name = row.columns[c]
-      obj[name] = row.values[c].val
+      obj[name] = row.values[c].val ?? null
     }
     result.push(obj)
   }
