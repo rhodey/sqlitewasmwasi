@@ -43,11 +43,11 @@ world sqlite-component {
   export sqlite;
 }
 
-world sqlite-client {
+world sqlite-app {
   import sqlite;
 }
 
-world sqlite-command-client {
+world sqlite-cli-app {
   import sqlite;
   export wasi:cli/run@0.2.3;
 }

@@ -47,3 +47,8 @@ build:
 run:
   just run-rust
   just run-js
+
+test:
+  just build
+  bash -c scripts/test-example-rust.sh
+  bash -c scripts/test-example-js.sh
