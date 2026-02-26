@@ -5,30 +5,34 @@ mod bindings {
     });
 }
 
-use bindings::wasm::wasi_sqlite::sqlite::{close, open, prepare, query, release, SqliteValue};
+use bindings::wasm::wasi_sqlite::sqlite::{
+    all, close, exec, open, prepare, release, run, SqliteValue,
+};
 
 fn main() {
     let db = open(":memory:").expect("open db");
 
-    let init = prepare(
+    exec(
         db,
         "create table demo (id integer, name text, note text, ratio real, big_id integer)",
     )
-    .expect("prepare init");
-    query(init).expect("run init");
-    release(init).expect("release init");
+    .expect("exec init");
 
     let insert = prepare(
         db,
         "insert into demo (id, name, note, ratio, big_id) values (1, 'hello from rust', NULL, 3.25, 9007199254740993)",
     )
     .expect("prepare insert");
-    query(insert).expect("run insert");
+    let info = run(insert).expect("run insert");
+    println!(
+        "changes={} last_insert_rowid={}",
+        info.changes, info.last_insert_rowid
+    );
     release(insert).expect("release insert");
 
     let select =
         prepare(db, "select id, name, note, ratio, big_id from demo").expect("prepare select");
-    let rows = query(select).expect("query rows");
+    let rows = all(select).expect("query rows");
 
     for row in rows {
         for value in row.values {
