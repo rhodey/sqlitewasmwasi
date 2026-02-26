@@ -1,4 +1,4 @@
-# wasm-wasi-sqlite
+# SQLiteWASI
 
 WASM WASI P2 SQLite component.
 

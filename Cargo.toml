@@ -1,9 +1,8 @@
 [workspace]
-members = ["sqlite-component", "examples/rust-client"]
-default-members = ["examples/rust-client"]
+members = ["sqlite-component", "example-rust"]
+default-members = ["example-rust"]
 resolver = "2"
 
 [workspace.package]
 edition = "2021"
 license = "MIT"
-
