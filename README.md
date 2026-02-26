@@ -1,19 +1,19 @@
 # SQLiteWASI
-WASM WASI P2 SQLite component.
+WASI P2 SQLite component.
 
-## Build
-### Docker
+Use SQLite from WASM apps. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime) or [one of these](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
+
+## Build component (docker)
 ```
-just sqlite-docker
+just component-docker
 ```
 
-### No docker
+## Build component (no docker)
 + [Install WASI SDK](https://github.com/WebAssembly/wasi-sdk#install)
-+ cp example.env .env
-+ edit .env
-+ just sqlite
++ `cp example.env .env` && edit .env
++ `just component`
 
-## Run
+## Run examples
 ```
 just build-rust run-rust
 just build-js run-js
