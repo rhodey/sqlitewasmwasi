@@ -16,21 +16,30 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Just
-        run: sudo apt install -y build-essential clang just wget
-
-      - name: Build
+      - name: Setup
         run: |
+          rustup target add wasm32-wasip2
+          cargo install wac-cli
+          sudo apt install -y build-essential clang just wget
           bash -c ./scripts/wasi-sdk.sh
           echo "WASI_SDK_PATH=$(realpath ../wasi-sdk-27.0-x86_64-linux)" > .env
-          rustup target add wasm32-wasip2
-          just component
 
-      - name: Test
-        run: just test
+      - name: Build
+        run: just component
+
+      - name: Test rust
+        run: bash -c scripts/test-example-rust.sh
+
+      - name: Test js
+        run: bash -c scripts/test-package-js.sh
 
       - name: Build docker
-        run: just component-docker
+        run: |
+          rm -rf target/
+          just component-docker
 
-      - name: Test docker
-        run: just test
+      - name: Test docker rust
+        run: bash -c scripts/test-example-rust.sh
+
+      - name: Test docker js
+        run: bash -c scripts/test-package-js.sh
