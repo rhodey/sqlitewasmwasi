@@ -1,4 +1,4 @@
-# SQLiteWASI
+# SQLiteWasmWasi
 SQLite WASI P2 component.
 
 Use SQLite from WASI. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) or [other](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
@@ -18,7 +18,7 @@ just component-docker
 ## Example JS
 JS to WASM by the power of [ComponentizeJS](https://github.com/bytecodealliance/ComponentizeJS)
 ```js
-import { open } from 'sqlite-wasi'
+import { open } from 'sqlite-wasm-wasi'
 
 const db = open('/app/test.js.db')
 db.exec('drop table if exists demo')
@@ -44,8 +44,8 @@ console.log(rows) // >> [ ..., ... ]
 
 ## Example Rust
 Rust to WASM by the power of [wasm32-wasip2](https://doc.rust-lang.org/nightly/rustc/platform-support/wasm32-wasip2.html)
-```js
-import { open } from 'sqlite-wasi'
+```rust
+// todo
 ```
 
 ## Run tests
