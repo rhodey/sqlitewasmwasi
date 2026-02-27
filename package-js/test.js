@@ -21,6 +21,20 @@ function equals(actual, expected, msg) {
   }
 }
 
+function equalsBlob(actual, expected, msg) {
+  const ok = actual instanceof Uint8Array &&
+    expected instanceof Uint8Array &&
+    actual.length === expected.length &&
+    actual.every((val, idx) => val === expected[idx])
+  if (!ok) {
+    console.log('pass', msg)
+  } else {
+    console.log('fail', msg)
+    console.log('actual >', actual)
+    console.log('expected', expected)
+  }
+}
+
 const basic = () => {
   console.log('basic')
   const db = open('/app/test.js.db')
@@ -155,9 +169,11 @@ const txn = () => {
   equals(rows.length, 1, 'select 1 rows')
   equals(rows[0], obj[0], 'select obj0')
 
+  // commit
   let txn = db.transaction((nums) => {
     for (const num of nums) {
-      insert.run([num])
+      info = insert.run([num])
+      equals(info.changes, 1n, 'insert 1 row')
     }
   })
 
@@ -170,22 +186,30 @@ const txn = () => {
     equals(rows[i], obj[i], `select obj${i}`)
   }
 
+  txn = db.transaction((nums) => {
+    for (const num of nums) {
+      insert.run([num])
+    }
+    // rollback
+    throw new Error('test')
+  })
+
+  try {
+    txn(nums)
+    console.log('fail', 'txn throws')
+  } catch (err) {
+    console.log('pass', 'txn throws')
+    equals(err.message, 'test', 'txn throws msg')
+  }
+
+  rows = select.all()
+  equals(rows.length, obj.length, `select ${obj.length} rows`)
+  for (let i = 0; i < obj.length; i++) {
+    equals(rows[i], obj[i], `select obj${i}`)
+  }
+
   db.close()
   equals(1, 1, 'close')
-}
-
-function equalsBlob(actual, expected, msg) {
-  const ok = actual instanceof Uint8Array &&
-    expected instanceof Uint8Array &&
-    actual.length === expected.length &&
-    actual.every((val, idx) => val === expected[idx])
-  if (!ok) {
-    console.log('pass', msg)
-  } else {
-    console.log('fail', msg)
-    console.log('actual >', actual)
-    console.log('expected', expected)
-  }
 }
 
 const misc = () => {
