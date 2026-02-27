@@ -15,7 +15,7 @@ just component-docker
 + `cp example.env .env` && edit .env
 + `just component`
 
-## Example JS
+## Example js
 JS to WASM by the power of [ComponentizeJS](https://github.com/bytecodealliance/ComponentizeJS)
 ```js
 import { open } from 'sqlite-wasm-wasi'
@@ -42,13 +42,20 @@ let rows = statement.all([1])
 console.log(rows) // >> [ ..., ... ]
 ```
 
-## Example Rust
+## Example rust
 Rust to WASM by the power of [wasm32-wasip2](https://doc.rust-lang.org/nightly/rustc/platform-support/wasm32-wasip2.html)
 ```rust
 // todo
 ```
 
-## Run tests
+## Example other
+The JS and Rust packages are convenient wrappers around `component.wasm`.
+
+After build you will have `target/wasm32-wasip2/release/component.wasm` and [sqlite.wit](https://github.com/rhodey/sqlitewasmwasi/blob/main/wit/sqlite.wit).
+
+These two files are all that is needed to use SQLiteWasmWasi [from another language](https://github.com/yoshuawuyts/awesome-wasm-components#programming-language-support).
+
+## Test
 Install [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) then:
 ```
 just test
