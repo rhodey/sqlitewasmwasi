@@ -1,7 +1,7 @@
 # SQLiteWasmWasi
 SQLite WASI P2 component.
 
-Use SQLite from WASI. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) or [other](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
+Use SQLite from WASI P2. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) or [other](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
 
 [Rusqlite](https://crates.io/crates/rusqlite) is used internally but the API exposed is closer to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
@@ -135,6 +135,15 @@ The JS and Rust packages are convenient wrappers around `component.wasm`.
 After build you will have `target/wasm32-wasip2/release/component.wasm` and [sqlite.wit](https://github.com/rhodey/sqlitewasmwasi/blob/main/wit/sqlite.wit).
 
 These two files are all that is needed to use SQLiteWasmWasi [from another language](https://github.com/yoshuawuyts/awesome-wasm-components#programming-language-support).
+
+## Notes js
+`let stmt = db.prepare('sql')` returns a "prepared statement".
+
+Prepared statements can be run 1 or 100 or more times.
+
+If your app is eg an http server you need to be calling `stmt.release()` when done with it.
+
+Rust has the `Drop` trait and so it happens automatically.
 
 ## Test
 ```
