@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 mod bindings {
     wit_bindgen::generate!({
@@ -13,7 +13,7 @@ use bindings::wasm::sqlite_wasi::sqlite::{
 
 pub type Value = SqliteValue;
 pub type RunInfo = SqliteRunInfo;
-pub type Row = BTreeMap<String, Value>;
+pub type Row = HashMap<String, Value>;
 
 #[derive(Debug, Clone)]
 pub struct Error {
@@ -119,5 +119,5 @@ fn row_to_object(row: bindings::wasm::sqlite_wasi::sqlite::SqliteRow) -> Row {
     row.columns
         .into_iter()
         .zip(row.values)
-        .collect::<BTreeMap<_, _>>()
+        .collect::<HashMap<_, _>>()
 }
