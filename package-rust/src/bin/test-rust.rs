@@ -1,4 +1,4 @@
-use package_rust::{open, row_value, Error, Row, Value};
+use sqlite_wasm_wasi::{open, row_value, Error, Row, Value};
 
 fn value_to_string(value: &Value) -> String {
     match value {
