@@ -23,6 +23,7 @@ jobs:
         run: |
           bash -c ./scripts/wasi-sdk.sh
           echo "WASI_SDK_PATH=$(realpath ../wasi-sdk-27.0-x86_64-linux)" > .env
+          rustup target add wasm32-wasip2
           just component
 
       - name: Test
