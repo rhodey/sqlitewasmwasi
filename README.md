@@ -72,8 +72,9 @@ After build you will have `target/wasm32-wasip2/release/component.wasm` and [sql
 These two files are all that is needed to use SQLiteWasmWasi [from another language](https://github.com/yoshuawuyts/awesome-wasm-components#programming-language-support).
 
 ## Test
-Install [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) then:
 ```
+cargo install wac-cli
+curl https://wasmtime.dev/install.sh -sSf | bash
 just test
 ```
 
