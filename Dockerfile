@@ -24,10 +24,10 @@ RUN rustup target add wasm32-wasip2
 COPY Cargo.toml .
 COPY Cargo.lock .
 COPY .cargo/ /workspace/.cargo/
-COPY sqlite-component/ /workspace/sqlite-component/
+COPY component/ /workspace/component/
 COPY example-rust/ /workspace/example-rust/
 COPY wit/ /workspace/wit/
-RUN WASI_SDK_PATH="/root/sdk/wasi-sdk-27.0-x86_64-linux" LIBSQLITE3_FLAGS="-DSQLITE_THREADSAFE=0" cargo build -p sqlite-component --release
+RUN WASI_SDK_PATH="/root/sdk/wasi-sdk-27.0-x86_64-linux" LIBSQLITE3_FLAGS="-DSQLITE_THREADSAFE=0" cargo build -p component --release
 
 FROM scratch AS export
-COPY --from=builder /workspace/target/wasm32-wasip2/release/sqlite_component.wasm /sqlite_component.wasm
+COPY --from=builder /workspace/target/wasm32-wasip2/release/component.wasm /component.wasm

@@ -3,17 +3,17 @@ sudo := "$(docker info > /dev/null 2>&1 || echo 'sudo')"
 export LIBSQLITE3_FLAGS := "-DSQLITE_THREADSAFE=0"
 
 component:
-  export $(cat .env | xargs) && cargo build -p sqlite-component --release
+  export $(cat .env | xargs) && cargo build -p component --release
 
 component-docker:
   mkdir -p target/wasm32-wasip2/release
-  {{sudo}} docker build -f Dockerfile -t sqlite-component --target export .
+  {{sudo}} docker build -f Dockerfile -t component --target export .
   {{sudo}} docker build --output type=local,dest=./target/wasm32-wasip2/release --target export .
 
 plug-rust:
   wac plug \
     target/wasm32-wasip2/release/example-rust.wasm \
-    --plug target/wasm32-wasip2/release/sqlite_component.wasm \
+    --plug target/wasm32-wasip2/release/component.wasm \
     -o target/wasm32-wasip2/release/example-rust-total.wasm
 
 build-rust:
@@ -27,7 +27,7 @@ run-rust:
 plug-js:
   wac plug \
     package-js/dist/test.js.wasm \
-    --plug target/wasm32-wasip2/release/sqlite_component.wasm \
+    --plug target/wasm32-wasip2/release/component.wasm \
     -o target/wasm32-wasip2/release/test.js.total.wasm
 
 build-js:

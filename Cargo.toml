@@ -1,5 +1,5 @@
 [workspace]
-members = ["sqlite-component", "example-rust"]
+members = ["component", "example-rust"]
 default-members = ["example-rust"]
 resolver = "2"
 
