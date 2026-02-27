@@ -11,4 +11,9 @@ if grep -q "fail" <<<"$OUTPUT"; then
   exit 1
 fi
 
+if grep -q "error" <<<"$OUTPUT"; then
+  echo "1 or more error"
+  exit 1
+fi
+
 echo "js tests pass"

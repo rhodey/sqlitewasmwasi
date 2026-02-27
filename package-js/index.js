@@ -52,12 +52,14 @@ class Statement {
   }
 
   run(params=[]) {
+    params = Array.isArray(params) ? params : [params]
     params = valuesToParams(params)
     const fn = () => this.stmt.run(params)
     return unwrapErr(fn)
   }
 
   one(params=[]) {
+    params = Array.isArray(params) ? params : [params]
     params = valuesToParams(params)
     const fn = () => {
       const row = this.stmt.one(params)
@@ -68,6 +70,7 @@ class Statement {
   }
 
   all(params=[]) {
+    params = Array.isArray(params) ? params : [params]
     params = valuesToParams(params)
     const fn = () => {
       const rows = this.stmt.all(params)
@@ -88,6 +91,7 @@ class Database {
   }
 
   exec(sql, params=[]) {
+    params = Array.isArray(params) ? params : [params]
     params = valuesToParams(params)
     const fn = () => exec(this.handle, sql, params)
     return unwrapErr(fn)
@@ -96,6 +100,20 @@ class Database {
   prepare(sql) {
     const stmt = prepare(this.handle, sql)
     return new Statement(stmt)
+  }
+
+  transaction(fn) {
+    return (arg) => {
+      try {
+        this.exec(`BEGIN`)
+        const res = fn(arg)
+        this.exec(`COMMIT`)
+        return res
+      } catch (err) {
+        this.exec(`ROLLBACK`)
+        throw err
+      }
+    }
   }
 
   close() {

@@ -24,19 +24,19 @@ function equals(actual, expected, msg) {
 const basic = () => {
   console.log('basic')
   const db = open('/app/test.js.db')
-  db.exec('drop table if exists demo')
+  db.exec('drop table if exists basic')
 
-  let num = db.exec('create table demo (id integer, name text, note text, ratio real, big_int integer)')
+  let num = db.exec('create table basic (id integer, name text, note text, ratio real, big_int integer)')
   equals(num, 0n, 'create table no rows')
 
-  let statement = db.prepare('insert into demo (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)')
+  let statement = db.prepare('insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)')
   let info = statement.run([1, 'hello from js', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
   equals(info.lastInsertRowid, 1n, 'row id 1')
   equals(true, statement.release(), 'release true')
   equals(false, statement.release(), 'release false')
 
-  statement = db.prepare('insert into demo (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)')
+  statement = db.prepare('insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)')
   info = statement.run([2, 'hello from js', null, 3.25, 9007199254740993n])
   equals(info.changes, 1n, 'insert 1 row')
   equals(info.lastInsertRowid, 2n, 'row id 2')
@@ -46,42 +46,42 @@ const basic = () => {
   const obj1 = { id: 1n, name: 'hello from js', note: null, ratio: 3.25, big_int: 9007199254740993n }
   const obj2 = { ...obj1, id: 2n }
 
-  statement = db.prepare('select id, name, note, ratio, big_int from demo where id = 1')
+  statement = db.prepare('select id, name, note, ratio, big_int from basic where id = 1')
   let row = statement.one()
   equals(row, obj1, 'select 1 row A')
 
-  statement = db.prepare('select id, name, note, ratio, big_int from demo where id = ?')
+  statement = db.prepare('select id, name, note, ratio, big_int from basic where id = ?')
   row = statement.one([1])
   equals(row, obj1, 'select 1 row B')
 
-  statement = db.prepare('select id, name, note, ratio, big_int from demo where id = ?')
+  statement = db.prepare('select id, name, note, ratio, big_int from basic where id = ?')
   row = statement.one([2])
   equals(row, obj2, 'select 1 row C')
 
-  statement = db.prepare('select id, name, note, ratio, big_int from demo where id = 3')
+  statement = db.prepare('select id, name, note, ratio, big_int from basic where id = 3')
   row = statement.one()
   equals(row, null, 'select 1 row NULL')
 
-  statement = db.prepare('select id, name, note, ratio, big_int from demo order by id')
+  statement = db.prepare('select id, name, note, ratio, big_int from basic order by id')
   let rows = statement.all()
   equals(rows.length, 2, 'select 2 rows')
   equals(rows[0], obj1, 'select row id 1')
   equals(rows[1], obj2, 'select row id 2')
 
-  statement = db.prepare('select id, name, note, ratio, big_int from demo where id = ?')
+  statement = db.prepare('select id, name, note, ratio, big_int from basic where id = ?')
   rows = statement.all([1])
   equals(rows.length, 1, 'select 1 rows')
   equals(rows[0], obj1, 'select row id 1')
 
-  statement = db.prepare('select id, name, note, ratio, big_int from demo where id = ?')
+  statement = db.prepare('select id, name, note, ratio, big_int from basic where id = ?')
   rows = statement.all([3])
   equals(rows.length, 0, 'select 0 rows')
 
-  num = db.exec('update demo set id = 3 where id = ?', [1])
+  num = db.exec('update basic set id = 3 where id = ?', [1])
   equals(num, 1n, 'update 1 rows')
-  num = db.exec('update demo set id = 3 where id = ?', [1])
+  num = db.exec('update basic set id = 3 where id = ?', [1])
   equals(num, 0n, 'update 0 rows')
-  num = db.exec('delete from demo where 1 = ?', [1])
+  num = db.exec('delete from basic where 1 = ?', [1])
   equals(num, 2n, 'delete 2 rows')
 
   statement = db.prepare('select 3 where 1 = 1')
@@ -137,6 +137,43 @@ const strict = () => {
   equals(1, 1, 'close')
 }
 
+const txn = () => {
+  console.log('txn')
+  const db = open('/app/test.js.db')
+  db.exec('drop table if exists txn')
+
+  db.exec('create table txn (id integer)')
+  let insert = db.prepare('insert into txn (id) values (?)')
+  let info = insert.run([1])
+  equals(info.changes, 1n, 'insert 1 row')
+  equals(info.lastInsertRowid, 1n, 'row id 1')
+
+  const obj = [1n, 4n, 5n, 6n].map((n) => ({ id: n }))
+
+  let select = db.prepare('select * from txn order by id')
+  let rows = select.all()
+  equals(rows.length, 1, 'select 1 rows')
+  equals(rows[0], obj[0], 'select obj0')
+
+  let txn = db.transaction((nums) => {
+    for (const num of nums) {
+      insert.run([num])
+    }
+  })
+
+  const nums = obj.slice(1).map((obj) => obj.id)
+  txn(nums)
+
+  rows = select.all()
+  equals(rows.length, obj.length, `select ${obj.length} rows`)
+  for (let i = 0; i < obj.length; i++) {
+    equals(rows[i], obj[i], `select obj${i}`)
+  }
+
+  db.close()
+  equals(1, 1, 'close')
+}
+
 function equalsBlob(actual, expected, msg) {
   const ok = actual instanceof Uint8Array &&
     expected instanceof Uint8Array &&
@@ -151,20 +188,19 @@ function equalsBlob(actual, expected, msg) {
   }
 }
 
-// todo: transactions
 const misc = () => {
   console.log('misc')
   const db = open('/app/test.js.db')
 
-  db.exec('drop table if exists blobs')
-  db.exec('create table blobs (id integer, buf blob)')
+  db.exec('drop table if exists misc')
+  db.exec('create table misc (id integer, buf blob)')
 
   const blob = new Uint8Array([1, 2, 3])
-  let statement = db.prepare('insert into blobs (id, buf) values (?, ?)')
+  let statement = db.prepare('insert into misc (id, buf) values (?, ?)')
   let info = statement.run([1, blob])
   equals(info.changes, 1n, 'insert 1 row')
 
-  statement = db.prepare('select * from blobs')
+  statement = db.prepare('select * from misc')
   let row = statement.one()
   equals(row.id, 1n, 'row id 1')
   equalsBlob(row.buf, blob, 'row buf ok')
@@ -196,7 +232,7 @@ const misc = () => {
   equals(1, 1, 'close')
 
   try {
-    db.exec('drop table if exists blobs')
+    db.exec('drop table if exists misc')
     console.log('fail', 'closed db throws')
   } catch (err) {
     console.log('pass', 'closed db throws')
@@ -208,6 +244,7 @@ export const run = {
     try {
       basic()
       strict()
+      txn()
       misc()
     } catch (err) {
       console.log('!! error', err)
