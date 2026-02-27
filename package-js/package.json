@@ -1,5 +1,5 @@
 {
-  "name": "sqlite-wasi",
+  "name": "sqlite-wasm-wasi",
   "author": "rhodey",
   "description": "SQLite WASI wrapper",
   "version": "0.1.0",
@@ -9,9 +9,9 @@
   "exports": "./index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/rhodey/sqlitewasi.git"
+    "url": "git://github.com/rhodey/sqlitewasmwasi.git"
   },
-  "homepage": "https://github.com/rhodey/sqlitewasi",
+  "homepage": "https://github.com/rhodey/sqlitewasmwasi",
   "scripts": {
     "bundle": "rollup -c",
     "build": "npm run bundle && componentize-js dist/bundle.js --wit ../wit --world-name sqlite-cli-app --disable http fetch-event -o dist/test.js.wasm"
