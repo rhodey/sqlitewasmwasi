@@ -250,7 +250,7 @@ fn strict() -> Result<(), Error> {
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
-        "insert 1 real",
+        "insert 1 text",
     );
 
     statement = db.prepare("select * from nums order by id")?;

@@ -18,6 +18,7 @@ COPY Cargo.toml .
 COPY Cargo.lock .
 COPY .cargo/ /workspace/.cargo/
 COPY component/ /workspace/component/
+COPY package-rust/ /workspace/package-rust/
 COPY example-rust/ /workspace/example-rust/
 COPY wit/ /workspace/wit/
 RUN WASI_SDK_PATH="/root/wasi-sdk-27.0-x86_64-linux" LIBSQLITE3_FLAGS="-DSQLITE_THREADSAFE=0" cargo build -p component --release

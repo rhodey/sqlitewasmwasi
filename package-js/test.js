@@ -140,7 +140,7 @@ const strict = () => {
   db.exec('create table nums (id integer, ratio real)')
   statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
   info = statement.run([1, 'abc'])
-  equals(info.changes, 1n, 'insert 1 real')
+  equals(info.changes, 1n, 'insert 1 text')
 
   statement = db.prepare('select * from nums order by id')
   rows = statement.all()
