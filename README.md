@@ -42,6 +42,7 @@ let rows = select.all([1])
 console.log(rows) // >> [ ..., ... ]
 
 // transactions
+db.exec('drop table if exists txn')
 db.exec('create table txn (id integer)')
 insert = db.prepare('insert into txn (id) values (?)')
 let insertMany = db.transaction((nums) => {
