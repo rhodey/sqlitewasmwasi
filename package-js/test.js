@@ -261,6 +261,18 @@ const misc = () => {
   } catch (err) {
     console.log('pass', 'closed db throws')
   }
+
+  const db2 = open('file:/app/test.js.db?vfs=unix-dotfile')
+  equals(1, 1, 'vfs open')
+  db2.close()
+  equals(1, 1, 'vfs close')
+
+  try {
+    open('file:/app/test.js.db?vfs=notfound')
+    console.log('error', 'vfs open throws')
+  } catch (err) {
+    console.log('pass', 'vfs open throws')
+  }
 }
 
 export const run = {

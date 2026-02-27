@@ -434,6 +434,16 @@ fn misc() -> Result<(), Error> {
         Err(_) => println!("pass closed db throws"),
     }
 
+    let db2 = open("file:/app/test.rust.db?vfs=unix-dotfile")?;
+    equals("1".to_string(), "1".to_string(), "vfs open");
+    db2.close()?;
+    equals("1".to_string(), "1".to_string(), "vfs close");
+
+    match open("file:/app/test.rust.db?vfs=notfound") {
+        Ok(_) => println!("error vfs open throws"),
+        Err(_) => println!("pass vfs open throws"),
+    }
+
     Ok(())
 }
 
