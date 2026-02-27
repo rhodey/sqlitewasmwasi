@@ -7,7 +7,7 @@ fn main() {
 }
 
 fn example() -> Result<(), package_rust::Error> {
-    let db = open("/app/example.js.db")?;
+    let db = open("/app/example.rust.db")?;
     db.exec("drop table if exists example", &[])?;
     db.exec(
         "create table example (id integer, name text, note text, ratio real, big_int integer)",
