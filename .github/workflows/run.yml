@@ -1,0 +1,35 @@
+name: Run
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Just
+        run: sudo apt install -y build-essential clang just wget
+
+      - name: Build
+        run: |
+          bash -c ./scripts/wasi-sdk.sh
+          echo "WASI_SDK_PATH=$(realpath ../wasi-sdk-27.0-x86_64-linux)" > .env
+          just component
+
+      - name: Test
+        run: just test
+
+      - name: Build docker
+        run: just component-docker
+
+      - name: Test docker
+        run: just test
