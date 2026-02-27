@@ -36,7 +36,7 @@ fn equals(actual: String, expected: String, msg: &str) {
 
 fn equals_blob(actual: &[u8], expected: &[u8], msg: &str) {
     let ok = actual == expected;
-    if !ok {
+    if ok {
         println!("pass {msg}");
     } else {
         println!("error {msg}");
