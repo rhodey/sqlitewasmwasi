@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-just build-rust
+just build-example-rust
 
-OUTPUT="$(just run-rust)"
+OUTPUT="$(just run-example-rust)"
 printf '%s\n' "$OUTPUT"
 
 grep -q '^id=int=1$' <<<"$OUTPUT"

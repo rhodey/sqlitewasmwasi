@@ -10,25 +10,34 @@ component-docker:
   {{sudo}} docker build -f Dockerfile -t component --target export .
   {{sudo}} docker build --output type=local,dest=./target/wasm32-wasip2/release --target export .
 
-plug-rust:
+plug-example-rust:
   wac plug \
     target/wasm32-wasip2/release/example-rust.wasm \
     --plug target/wasm32-wasip2/release/component.wasm \
     -o target/wasm32-wasip2/release/example-rust-total.wasm
 
-build-rust:
+build-example-rust:
   cargo build --manifest-path example-rust/Cargo.toml --release
-  just plug-rust
+  just plug-example-rust
 
-run-rust:
+run-example-rust:
   mkdir -p app/
   wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example-rust-total.wasm
 
-plug-test-js:
+plug-package-js:
   wac plug \
     package-js/dist/test.js.wasm \
     --plug target/wasm32-wasip2/release/component.wasm \
     -o target/wasm32-wasip2/release/test.js.total.wasm
+
+build-package-js:
+  npm --prefix package-js install
+  npm --prefix package-js run build
+  just plug-package-js
+
+run-package-js:
+  mkdir -p app/
+  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/test.js.total.wasm
 
 plug-example-js:
   wac plug \
@@ -36,27 +45,19 @@ plug-example-js:
     --plug target/wasm32-wasip2/release/component.wasm \
     -o target/wasm32-wasip2/release/example.js.total.wasm
 
-build-js:
-  npm --prefix package-js install
-  npm --prefix package-js run build
-  just plug-test-js
+build-example-js:
   npm --prefix example-js install
   npm --prefix example-js run build
   just plug-example-js
 
-run-js:
+run-example-js:
   mkdir -p app/
-  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/test.js.total.wasm
   wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example.js.total.wasm
 
 build:
   just component
-  just build-rust
-  just build-js
-
-run:
-  just run-rust
-  just run-js
+  just build-example-rust
+  just build-package-js
 
 test:
   just build

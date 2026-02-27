@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-just build-js
+just build-package-js
 
-OUTPUT="$(just run-js)"
+OUTPUT="$(just run-package-js)"
 printf '%s\n' "$OUTPUT"
 
 if grep -q "fail" <<<"$OUTPUT"; then
