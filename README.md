@@ -16,6 +16,7 @@ just component-docker
 + `just component`
 
 ## Example JS
+JS to WASM by the power of [ComponentizeJS](https://github.com/bytecodealliance/ComponentizeJS)
 ```js
 import { open } from 'sqlite-wasi'
 
@@ -39,6 +40,12 @@ console.log(row) // >> { id: 1n, name: 'hello from js', note: null, ratio: 3.25,
 statement = db.prepare('select * from demo where 1 = ? order by id')
 let rows = statement.all([1])
 console.log(rows) // >> [ ..., ... ]
+```
+
+## Example Rust
+Rust to WASM by the power of [wasm32-wasip2](https://doc.rust-lang.org/nightly/rustc/platform-support/wasm32-wasip2.html)
+```js
+import { open } from 'sqlite-wasi'
 ```
 
 ## Run tests
