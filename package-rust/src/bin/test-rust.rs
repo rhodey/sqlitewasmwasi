@@ -136,9 +136,10 @@ fn basic() -> Result<(), Error> {
     equals(row_to_string(&row), row_to_string(&obj2), "select 1 row C");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = 3")?;
-    let row = statement.one(&[])?;
+    let row_or_null = statement.one(&[])?;
     equals(
-        row.map(|r| row_to_string(&r))
+        row_or_null
+            .map(|r| row_to_string(&r))
             .unwrap_or_else(|| "null".to_string()),
         "null".to_string(),
         "select 1 row NULL",
