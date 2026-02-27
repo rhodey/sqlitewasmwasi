@@ -150,7 +150,7 @@ ComponentizeJS could improve in the future.
 ## Notes
 JS and Rust both detault to ["unix-dotfile" VFS](https://sqlite.org/vfs.html).
 
-Unix-dotfile VFS is exactly like default "unix" except it avoids POSIX `flock()` system call.
+Unix-dotfile VFS is exactly like default "unix" except it avoids POSIX `flock()` system calls.
 
 [Lock.host](https://github.com/rhodey/lock.host) will be forking and trying to upstream wasmtime flock support.
 
