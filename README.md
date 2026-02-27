@@ -3,7 +3,7 @@ SQLite WASI P2 component.
 
 Use SQLite from WASI. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) or [other](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
 
-[Rusqlite](https://crates.io/crates/rusqlite) is used internally but the APIs exposed are closer to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
+[Rusqlite](https://crates.io/crates/rusqlite) is used internally but the API exposed is closer to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
 ## Build component (docker)
 ```
