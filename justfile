@@ -24,20 +24,30 @@ run-rust:
   mkdir -p app/
   wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example-rust-total.wasm
 
-plug-js:
+plug-test-js:
   wac plug \
     package-js/dist/test.js.wasm \
     --plug target/wasm32-wasip2/release/component.wasm \
     -o target/wasm32-wasip2/release/test.js.total.wasm
 
+plug-example-js:
+  wac plug \
+    example-js/dist/example.js.wasm \
+    --plug target/wasm32-wasip2/release/component.wasm \
+    -o target/wasm32-wasip2/release/example.js.total.wasm
+
 build-js:
   npm --prefix package-js install
   npm --prefix package-js run build
-  just plug-js
+  just plug-test-js
+  npm --prefix example-js install
+  npm --prefix example-js run build
+  just plug-example-js
 
 run-js:
   mkdir -p app/
   wasmtime run --dir ./app::/app target/wasm32-wasip2/release/test.js.total.wasm
+  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example.js.total.wasm
 
 build:
   just component

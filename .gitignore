@@ -1,7 +1,8 @@
 .env*
 *\.swp
 target/
+example-js/dist/
+example-js/node_modules/
 package-js/dist/
 package-js/node_modules/
-example-js/node_modules/
 app/

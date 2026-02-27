@@ -1,108 +1,24 @@
-import { open, prepare, exec, close } from "wasm:sqlite-wasi/sqlite";
+import { open } from 'sqlite-wasm-wasi'
 
-const printSqliteValue = (value, label) => {
-  if (value === null) {
-    console.log(`${label}=null`);
-    return;
-  }
+const db = open('/app/example.js.db')
+db.exec('drop table if exists example')
+db.exec('create table example (id integer, name text, note text, ratio real, big_int integer)')
 
-  // ComponentizeJS variants are encoded as { tag, val }.
-  const { tag, val } = value;
+let statement = db.prepare('insert into example (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)')
+let info = statement.run([1, 'hello from js', null, 3.25, 9007199254740993n])
+console.log(info.changes, '== 1')
+console.log(info.lastInsertRowid, '== 1')
 
-  switch (tag) {
-    case "null":
-      console.log(`${label}=null`);
-      break;
-    case "integer":
-      console.log(`${label}=int=${val}`);
-      break;
-    case "real":
-      console.log(`${label}=real=${val}`);
-      break;
-    case "text":
-      console.log(`${label}=text=${val}`);
-      break;
-    case "blob":
-      console.log(`${label}=blob=${val.length} bytes`);
-      break;
-    default:
-      throw new Error(`unknown sqlite-value tag: ${tag}`);
-  }
-};
+info = statement.run([2, 'hello from js', null, 3.25, 9007199254740993n])
+console.log(info.changes, '== 1')
+console.log(info.lastInsertRowid, '== 2')
 
-const valueByName = (row, name) => {
-  const index = row.columns.indexOf(name);
-  if (index === -1) {
-    return undefined;
-  }
-  return row.values[index];
-};
+statement = db.prepare('select id, name, note, ratio, big_int from example where id = ?')
+let row = statement.one([1])
+console.log(row) // >> { id: 1n, name: 'hello from js', note: null, ratio: 3.25, big_int: 9007199254740993n }
 
-export const run = {
-  run() {
-    const db = open("file:/workspace/js-client.db?vfs=unix-dotfile");
+statement = db.prepare('select * from example where 1 = ? order by id')
+let rows = statement.all([1])
+console.log(rows) // >> [ ..., ... ]
 
-    exec(db, "drop table if exists demo", undefined);
-
-    exec(db, "create table demo (id integer, name text, note text, ratio real, big_id integer)", undefined);
-
-    {
-      const insert = prepare(
-        db,
-        "insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)",
-      );
-      const info = insert.run([
-        { tag: "integer", val: 1 },
-        { tag: "text", val: "hello from rust" },
-        { tag: "null" },
-        { tag: "real", val: 3.25 },
-        { tag: "integer", val: 9007199254740993n },
-      ]);
-      console.log(`changes=${info.changes} last_insert_rowid=${info.lastInsertRowid}`);
-      if (!insert.release()) {
-        throw new Error("expected insert.release() to return true on first call");
-      }
-    }
-
-    {
-      const select = prepare(db, "select id, name, note, ratio, big_id from demo");
-      const rows = select.all(undefined);
-
-      for (const row of rows) {
-        for (const column of ["id", "name", "note", "ratio", "big_id"]) {
-          const value = valueByName(row, column);
-          if (value === undefined) {
-            throw new Error(`expected ${column} to exist in row`);
-          }
-          printSqliteValue(value, column);
-        }
-      }
-      if (!select.release()) {
-        throw new Error("expected select.release() to return true on first call");
-      }
-    }
-
-    {
-      const selectOne = prepare(db, "select id, name, note, ratio, big_id from demo where id = ?");
-      const singleRow = selectOne.one([
-        { tag: "integer", val: 1 },
-      ]);
-      if (singleRow === undefined) {
-        throw new Error("expected one() to return a row");
-      }
-      if (singleRow.columns.length !== 5) {
-        throw new Error(`expected one() to return 5 columns, got ${singleRow.columns.length}`);
-      }
-      const name = valueByName(singleRow, "name");
-      if (name?.tag !== "text" || name.val !== "hello from rust") {
-        throw new Error("expected to look up one() value by column name");
-      }
-      console.log("one() got single row back");
-      if (!selectOne.release()) {
-        throw new Error("expected selectOne.release() to return true on first call");
-      }
-    }
-
-    close(db);
-  },
-};
+db.close()
