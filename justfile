@@ -27,14 +27,12 @@ run-example-rust:
 
 plug-package-rust:
   wac plug \
-    package-rust/dist/test.rust.wasm \
+    target/wasm32-wasip2/release/test-rust.wasm \
     --plug target/wasm32-wasip2/release/component.wasm \
     -o target/wasm32-wasip2/release/test.rust.total.wasm
 
 build-package-rust:
   cargo build --manifest-path package-rust/Cargo.toml --bin test-rust --release
-  mkdir -p package-rust/dist
-  cp target/wasm32-wasip2/release/test-rust.wasm package-rust/dist/test.rust.wasm
   just plug-package-rust
 
 run-package-rust:
