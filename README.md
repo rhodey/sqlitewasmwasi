@@ -141,9 +141,11 @@ These two files are all that is needed to use SQLiteWasmWasi [from another langu
 
 Prepared statements can be run 1 or 100 or more times.
 
-If your app is eg an http server you need to be calling `stmt.release()` when done with it.
+If your app is eg an HTTP server you need to be calling `stmt.release()` when done with it.
 
-Rust has the `Drop` trait and so it happens automatically.
+Rust has the `Drop` trait and does not need release.
+
+ComponentizeJS could improve in the future.
 
 ## Test
 ```
