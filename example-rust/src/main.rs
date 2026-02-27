@@ -1,4 +1,4 @@
-use package_rust::{open, Value};
+use sqlite_wasm_wasi::{open, Value};
 
 fn main() {
     if let Err(err) = example() {
@@ -6,7 +6,7 @@ fn main() {
     }
 }
 
-fn example() -> Result<(), package_rust::Error> {
+fn example() -> Result<(), sqlite_wasm_wasi::Error> {
     let db = open("/app/example.rust.db")?;
     db.exec("drop table if exists example", &[])?;
     db.exec(
