@@ -1,0 +1,470 @@
+use package_rust::{open, row_value, Error, Row, Value};
+
+fn value_to_string(value: &Value) -> String {
+    match value {
+        Value::Null => "null".to_string(),
+        Value::Integer(v) => format!("{v}n"),
+        Value::Real(v) => {
+            if v.fract() == 0.0 {
+                format!("{v:.1}")
+            } else {
+                v.to_string()
+            }
+        }
+        Value::Text(v) => format!("\"{v}\""),
+        Value::Blob(v) => format!("{:?}", v),
+    }
+}
+
+fn row_to_string(row: &Row) -> String {
+    let mut parts = Vec::new();
+    for (key, value) in row {
+        parts.push(format!("\"{key}\":{}", value_to_string(value)));
+    }
+    format!("{{{}}}", parts.join(","))
+}
+
+fn equals(actual: String, expected: String, msg: &str) {
+    if actual == expected {
+        println!("pass {msg}");
+    } else {
+        println!("error {msg}");
+        println!("actual > {actual}");
+        println!("expected {expected}");
+    }
+}
+
+fn equals_blob(actual: &[u8], expected: &[u8], msg: &str) {
+    let ok = actual == expected;
+    if !ok {
+        println!("pass {msg}");
+    } else {
+        println!("error {msg}");
+        println!("actual > {:?}", actual);
+        println!("expected {:?}", expected);
+    }
+}
+
+fn basic() -> Result<(), Error> {
+    println!("basic");
+    let db = open("/app/test.rust.db")?;
+    db.exec("drop table if exists basic", &[])?;
+
+    let mut num = db.exec(
+        "create table basic (id integer, name text, note text, ratio real, big_int integer)",
+        &[],
+    )?;
+    equals(
+        format!("{}n", num),
+        "0n".to_string(),
+        "create table no rows",
+    );
+
+    let mut statement =
+        db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
+    let mut info = statement.run(&[
+        Value::Integer(1),
+        Value::Text("hello from js".to_string()),
+        Value::Null,
+        Value::Real(3.25),
+        Value::Integer(9_007_199_254_740_993),
+    ])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 row",
+    );
+    equals(
+        format!("{}n", info.last_insert_rowid),
+        "1n".to_string(),
+        "row id 1",
+    );
+    equals(
+        statement.release()?.to_string(),
+        "true".to_string(),
+        "release true",
+    );
+    equals(
+        statement.release()?.to_string(),
+        "false".to_string(),
+        "release false",
+    );
+
+    statement =
+        db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
+    info = statement.run(&[
+        Value::Integer(2),
+        Value::Text("hello from js".to_string()),
+        Value::Null,
+        Value::Real(3.25),
+        Value::Integer(9_007_199_254_740_993),
+    ])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 row",
+    );
+    equals(
+        format!("{}n", info.last_insert_rowid),
+        "2n".to_string(),
+        "row id 2",
+    );
+    equals(
+        statement.release()?.to_string(),
+        "true".to_string(),
+        "release true",
+    );
+    equals(
+        statement.release()?.to_string(),
+        "false".to_string(),
+        "release false",
+    );
+
+    let obj1 = row_from_values(1, "hello from js", 3.25, 9_007_199_254_740_993);
+    let obj2 = row_from_values(2, "hello from js", 3.25, 9_007_199_254_740_993);
+
+    statement = db.prepare("select id, name, note, ratio, big_int from basic where id = 1")?;
+    let mut row = statement.one(&[])?.unwrap();
+    equals(row_to_string(&row), row_to_string(&obj1), "select 1 row A");
+
+    statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
+    row = statement.one(&[Value::Integer(1)])?.unwrap();
+    equals(row_to_string(&row), row_to_string(&obj1), "select 1 row B");
+
+    statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
+    row = statement.one(&[Value::Integer(2)])?.unwrap();
+    equals(row_to_string(&row), row_to_string(&obj2), "select 1 row C");
+
+    statement = db.prepare("select id, name, note, ratio, big_int from basic where id = 3")?;
+    let row = statement.one(&[])?;
+    equals(
+        row.map(|r| row_to_string(&r))
+            .unwrap_or_else(|| "null".to_string()),
+        "null".to_string(),
+        "select 1 row NULL",
+    );
+
+    statement = db.prepare("select id, name, note, ratio, big_int from basic order by id")?;
+    let mut rows = statement.all(&[])?;
+    equals(rows.len().to_string(), "2".to_string(), "select 2 rows");
+    equals(
+        row_to_string(&rows[0]),
+        row_to_string(&obj1),
+        "select row id 1",
+    );
+    equals(
+        row_to_string(&rows[1]),
+        row_to_string(&obj2),
+        "select row id 2",
+    );
+
+    statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
+    rows = statement.all(&[Value::Integer(1)])?;
+    equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
+    equals(
+        row_to_string(&rows[0]),
+        row_to_string(&obj1),
+        "select row id 1",
+    );
+
+    statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
+    rows = statement.all(&[Value::Integer(3)])?;
+    equals(rows.len().to_string(), "0".to_string(), "select 0 rows");
+
+    num = db.exec("update basic set id = 3 where id = ?", &[Value::Integer(1)])?;
+    equals(format!("{}n", num), "1n".to_string(), "update 1 rows");
+    num = db.exec("update basic set id = 3 where id = ?", &[Value::Integer(1)])?;
+    equals(format!("{}n", num), "0n".to_string(), "update 0 rows");
+    num = db.exec("delete from basic where 1 = ?", &[Value::Integer(1)])?;
+    equals(format!("{}n", num), "2n".to_string(), "delete 2 rows");
+
+    statement = db.prepare("select 3 where 1 = 1")?;
+    row = statement.one(&[])?.unwrap();
+    let mut expected = Row::new();
+    expected.insert("3".to_string(), Value::Integer(3));
+    equals(
+        row_to_string(&row),
+        row_to_string(&expected),
+        "select 3 col name",
+    );
+
+    db.close()?;
+    equals("1".to_string(), "1".to_string(), "close");
+    Ok(())
+}
+
+fn strict() -> Result<(), Error> {
+    println!("strict");
+    let db = open("/app/test.rust.db")?;
+    db.exec("drop table if exists nums", &[])?;
+    db.exec("create table nums (id integer, ratio real) strict", &[])?;
+    let mut statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
+    let mut info = statement.run(&[Value::Integer(1), Value::Real(3.25)])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 real",
+    );
+    info = statement.run(&[Value::Integer(2), Value::Integer(2)])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 int as real",
+    );
+    info = statement.run(&[Value::Integer(3), Value::Integer(3)])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 bigint as real",
+    );
+
+    match statement.run(&[Value::Integer(4), Value::Text("abc".to_string())]) {
+        Ok(_) => println!("error insert text as real throws"),
+        Err(_) => println!("pass insert text as real throws"),
+    }
+
+    statement = db.prepare("select * from nums order by id")?;
+    let mut rows = statement.all(&[])?;
+    equals(rows.len().to_string(), "3".to_string(), "select 3 rows");
+    equals(
+        row_to_string(&rows[0]),
+        row_to_string(&row_num(1, Value::Real(3.25))),
+        "select row id 1",
+    );
+    equals(
+        row_to_string(&rows[1]),
+        row_to_string(&row_num(2, Value::Real(2.0))),
+        "select row id 2",
+    );
+    equals(
+        row_to_string(&rows[2]),
+        row_to_string(&row_num(3, Value::Real(3.0))),
+        "select row id 3",
+    );
+
+    db.exec("drop table if exists nums", &[])?;
+    db.exec("create table nums (id integer, ratio real)", &[])?;
+    statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
+    info = statement.run(&[Value::Integer(1), Value::Text("abc".to_string())])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 real",
+    );
+
+    statement = db.prepare("select * from nums order by id")?;
+    rows = statement.all(&[])?;
+    equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
+    equals(
+        row_to_string(&rows[0]),
+        row_to_string(&row_num(1, Value::Text("abc".to_string()))),
+        "select row id 1",
+    );
+
+    db.close()?;
+    equals("1".to_string(), "1".to_string(), "close");
+    Ok(())
+}
+
+fn txn() -> Result<(), Error> {
+    println!("txn");
+    let db = open("/app/test.rust.db")?;
+    db.exec("drop table if exists txn", &[])?;
+
+    db.exec("create table txn (id integer)", &[])?;
+    let insert = db.prepare("insert into txn (id) values (?)")?;
+    let mut info = insert.run(&[Value::Integer(1)])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 row",
+    );
+    equals(
+        format!("{}n", info.last_insert_rowid),
+        "1n".to_string(),
+        "row id 1",
+    );
+
+    let objs = vec![1, 4, 5, 6]
+        .into_iter()
+        .map(|n| row_id(n))
+        .collect::<Vec<_>>();
+
+    let select = db.prepare("select * from txn order by id")?;
+    let mut rows = select.all(&[])?;
+    equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
+    equals(
+        row_to_string(&rows[0]),
+        row_to_string(&objs[0]),
+        "select obj0",
+    );
+
+    let mut txn = db.transaction(|nums: Vec<i64>| {
+        for num in nums {
+            info = insert.run(&[Value::Integer(num)])?;
+            equals(
+                format!("{}n", info.changes),
+                "1n".to_string(),
+                "insert 1 row",
+            );
+        }
+        Ok(())
+    });
+
+    let nums = objs
+        .iter()
+        .skip(1)
+        .map(|obj| match row_value(obj, "id") {
+            Some(Value::Integer(v)) => *v,
+            _ => 0,
+        })
+        .collect::<Vec<_>>();
+    txn(nums.clone())?;
+
+    rows = select.all(&[])?;
+    equals(
+        rows.len().to_string(),
+        objs.len().to_string(),
+        &format!("select {} rows", objs.len()),
+    );
+    for i in 0..objs.len() {
+        equals(
+            row_to_string(&rows[i]),
+            row_to_string(&objs[i]),
+            &format!("select obj{i}"),
+        );
+    }
+
+    let mut txn = db.transaction(|nums: Vec<i64>| -> Result<(), Error> {
+        for num in nums {
+            insert.run(&[Value::Integer(num)])?;
+        }
+        Err(Error {
+            code: -1,
+            message: "test".to_string(),
+        })
+    });
+
+    match txn(nums) {
+        Ok(_) => println!("error txn throws"),
+        Err(err) => {
+            println!("pass txn throws");
+            equals(err.message, "test".to_string(), "txn throws msg");
+        }
+    }
+
+    rows = select.all(&[])?;
+    equals(
+        rows.len().to_string(),
+        objs.len().to_string(),
+        &format!("select {} rows", objs.len()),
+    );
+    for i in 0..objs.len() {
+        equals(
+            row_to_string(&rows[i]),
+            row_to_string(&objs[i]),
+            &format!("select obj{i}"),
+        );
+    }
+
+    db.close()?;
+    equals("1".to_string(), "1".to_string(), "close");
+    Ok(())
+}
+
+fn misc() -> Result<(), Error> {
+    println!("misc");
+    let db = open("/app/test.rust.db")?;
+
+    db.exec("drop table if exists misc", &[])?;
+    db.exec("create table misc (id integer, buf blob)", &[])?;
+
+    let blob = vec![1, 2, 3];
+    let mut statement = db.prepare("insert into misc (id, buf) values (?, ?)")?;
+    let info = statement.run(&[Value::Integer(1), Value::Blob(blob.clone())])?;
+    equals(
+        format!("{}n", info.changes),
+        "1n".to_string(),
+        "insert 1 row",
+    );
+
+    statement = db.prepare("select * from misc")?;
+    let row = statement.one(&[])?.unwrap();
+    equals(
+        match row_value(&row, "id") {
+            Some(Value::Integer(v)) => format!("{v}n"),
+            _ => "null".to_string(),
+        },
+        "1n".to_string(),
+        "row id 1",
+    );
+    if let Some(Value::Blob(v)) = row_value(&row, "buf") {
+        equals_blob(v, &blob, "row buf ok");
+    } else {
+        println!("error row buf ok");
+    }
+
+    equals(
+        statement.release()?.to_string(),
+        "true".to_string(),
+        "release true",
+    );
+
+    match statement.run(&[]) {
+        Ok(_) => println!("error released statement run throws"),
+        Err(_) => println!("pass released statement run throws"),
+    }
+
+    match statement.one(&[]) {
+        Ok(_) => println!("error released statement one throws"),
+        Err(_) => println!("pass released statement one throws"),
+    }
+
+    match statement.all(&[]) {
+        Ok(_) => println!("error released statement all throws"),
+        Err(_) => println!("pass released statement all throws"),
+    }
+
+    db.close()?;
+    equals("1".to_string(), "1".to_string(), "close");
+
+    match db.exec("drop table if exists misc", &[]) {
+        Ok(_) => println!("error closed db throws"),
+        Err(_) => println!("pass closed db throws"),
+    }
+
+    Ok(())
+}
+
+fn row_from_values(id: i64, name: &str, ratio: f64, big_int: i64) -> Row {
+    let mut row = Row::new();
+    row.insert("id".to_string(), Value::Integer(id));
+    row.insert("name".to_string(), Value::Text(name.to_string()));
+    row.insert("note".to_string(), Value::Null);
+    row.insert("ratio".to_string(), Value::Real(ratio));
+    row.insert("big_int".to_string(), Value::Integer(big_int));
+    row
+}
+
+fn row_num(id: i64, ratio: Value) -> Row {
+    let mut row = Row::new();
+    row.insert("id".to_string(), Value::Integer(id));
+    row.insert("ratio".to_string(), ratio);
+    row
+}
+
+fn row_id(id: i64) -> Row {
+    let mut row = Row::new();
+    row.insert("id".to_string(), Value::Integer(id));
+    row
+}
+
+fn main() {
+    if let Err(err) = basic()
+        .and_then(|_| strict())
+        .and_then(|_| txn())
+        .and_then(|_| misc())
+    {
+        println!("!! error {:?}", err);
+    }
+}
