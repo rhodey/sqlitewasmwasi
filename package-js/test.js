@@ -152,8 +152,6 @@ function equalsBlob(actual, expected, msg) {
 }
 
 // todo: transactions
-// todo: test use after close
-// todo: test use after release
 const misc = () => {
   console.log('misc')
   const db = open('/app/test.js.db')
@@ -171,8 +169,38 @@ const misc = () => {
   equals(row.id, 1n, 'row id 1')
   equalsBlob(row.buf, blob, 'row buf ok')
 
+  equals(true, statement.release(), 'release true')
+
+  try {
+    statement.run()
+    console.log('fail', 'released statement run throws')
+  } catch (err) {
+    console.log('pass', 'released statement run throws')
+  }
+
+  try {
+    statement.one()
+    console.log('fail', 'released statement one throws')
+  } catch (err) {
+    console.log('pass', 'released statement one throws')
+  }
+
+  try {
+    statement.all()
+    console.log('fail', 'released statement all throws')
+  } catch (err) {
+    console.log('pass', 'released statement all throws')
+  }
+
   db.close()
   equals(1, 1, 'close')
+
+  try {
+    db.exec('drop table if exists blobs')
+    console.log('fail', 'closed db throws')
+  } catch (err) {
+    console.log('pass', 'closed db throws')
+  }
 }
 
 export const run = {
