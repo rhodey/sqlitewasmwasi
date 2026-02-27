@@ -6,4 +6,5 @@ example-js/node_modules/
 package-js/dist/
 package-js/node_modules/
 package-rust/dist/
+notes.txt
 app/
