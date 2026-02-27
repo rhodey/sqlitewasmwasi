@@ -1,5 +1,6 @@
 import { open } from 'sqlite-wasm-wasi'
 
+const example = () => {
 const db = open('/app/example.js.db')
 db.exec('drop table if exists example')
 db.exec('create table example (id integer, name text, note text, ratio real, big_int integer)')
@@ -22,3 +23,14 @@ let rows = statement.all([1])
 console.log(rows) // >> [ ..., ... ]
 
 db.close()
+}
+
+export const run = {
+  run() {
+    try {
+      example()
+    } catch (err) {
+      console.log('!! error', err)
+    }
+  }
+}

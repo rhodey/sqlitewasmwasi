@@ -58,8 +58,9 @@ build:
   just component
   just build-example-rust
   just build-package-js
+  just build-example-js
 
 test:
-  just build
   bash -c scripts/test-example-rust.sh
   bash -c scripts/test-package-js.sh
+  bash -c scripts/test-example-js.sh

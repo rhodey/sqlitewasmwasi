@@ -28,19 +28,26 @@ jobs:
       - name: Build
         run: just component
 
-      - name: Test rust
+      - name: Test example rust
         run: bash -c scripts/test-example-rust.sh
 
-      - name: Test js
+      - name: Test package js
         run: bash -c scripts/test-package-js.sh
+
+      - name: Test example js
+        run: bash -c scripts/test-example-js.sh
 
       - name: Build docker
         run: |
           rm -rf target/
           just component-docker
 
-      - name: Test docker rust
+      - name: Test example rust docker
         run: bash -c scripts/test-example-rust.sh
 
-      - name: Test docker js
+      - name: Test package js docker
         run: bash -c scripts/test-package-js.sh
+
+      - name: Test example js docker
+        run: bash -c scripts/test-example-js.sh
+

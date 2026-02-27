@@ -13,4 +13,4 @@ grep -q '^ratio=real=3.25$' <<<"$OUTPUT"
 grep -q '^big_id=int=9007199254740993$' <<<"$OUTPUT"
 grep -q '^one() got single row back$' <<<"$OUTPUT"
 
-echo "rust tests pass"
+echo "rust example tests pass"

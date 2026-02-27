@@ -15,7 +15,7 @@ function equals(actual, expected, msg) {
   if (actual === expected) {
     console.log('pass', msg)
   } else {
-    console.log('fail', msg)
+    console.log('error', msg)
     console.log('actual >', actual)
     console.log('expected', expected)
   }
@@ -29,7 +29,7 @@ function equalsBlob(actual, expected, msg) {
   if (!ok) {
     console.log('pass', msg)
   } else {
-    console.log('fail', msg)
+    console.log('error', msg)
     console.log('actual >', actual)
     console.log('expected', expected)
   }
@@ -123,7 +123,7 @@ const strict = () => {
 
   try {
     statement.run([4, 'abc'])
-    console.log('fail', 'insert text as real throws')
+    console.log('error', 'insert text as real throws')
   } catch (err) {
     console.log('pass', 'insert text as real throws')
   }
@@ -196,7 +196,7 @@ const txn = () => {
 
   try {
     txn(nums)
-    console.log('fail', 'txn throws')
+    console.log('error', 'txn throws')
   } catch (err) {
     console.log('pass', 'txn throws')
     equals(err.message, 'test', 'txn throws msg')
@@ -233,21 +233,21 @@ const misc = () => {
 
   try {
     statement.run()
-    console.log('fail', 'released statement run throws')
+    console.log('error', 'released statement run throws')
   } catch (err) {
     console.log('pass', 'released statement run throws')
   }
 
   try {
     statement.one()
-    console.log('fail', 'released statement one throws')
+    console.log('error', 'released statement one throws')
   } catch (err) {
     console.log('pass', 'released statement one throws')
   }
 
   try {
     statement.all()
-    console.log('fail', 'released statement all throws')
+    console.log('error', 'released statement all throws')
   } catch (err) {
     console.log('pass', 'released statement all throws')
   }
@@ -257,7 +257,7 @@ const misc = () => {
 
   try {
     db.exec('drop table if exists misc')
-    console.log('fail', 'closed db throws')
+    console.log('error', 'closed db throws')
   } catch (err) {
     console.log('pass', 'closed db throws')
   }
