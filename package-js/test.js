@@ -21,12 +21,8 @@ function equals(actual, expected, msg) {
   }
 }
 
-// todo: transactions
-// todo: test blob type
-// todo: test use after close
-// todo: test use after release
-const test = () => {
-  console.log('test')
+const basic = () => {
+  console.log('basic')
   const db = open('/app/test.js.db')
   db.exec('drop table if exists demo')
 
@@ -88,16 +84,23 @@ const test = () => {
   num = db.exec('delete from demo where 1 = ?', [1])
   equals(num, 2n, 'delete 2 rows')
 
-  // without names
   statement = db.prepare('select 3 where 1 = 1')
   row = statement.one()
   equals(row, { '3': 3n }, 'select 3 col name')
 
-  // strict types
+  db.close()
+  equals(1, 1, 'close')
+}
+
+const strict = () => {
+  console.log('strict')
+  const db = open('/app/test.js.db')
+
+  // strict
   db.exec('drop table if exists nums')
   db.exec('create table nums (id integer, ratio real) strict')
-  statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
-  info = statement.run([1, 3.25])
+  let statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
+  let info = statement.run([1, 3.25])
   equals(info.changes, 1n, 'insert 1 real')
   info = statement.run([2, 2])
   equals(info.changes, 1n, 'insert 1 int as real')
@@ -112,13 +115,13 @@ const test = () => {
   }
 
   statement = db.prepare('select * from nums order by id')
-  rows = statement.all()
+  let rows = statement.all()
   equals(rows.length, 3, 'select 3 rows')
   equals(rows[0], { id: 1n, ratio: 3.25 }, 'select row id 1')
   equals(rows[1], { id: 2n, ratio: 2.0 }, 'select row id 2')
   equals(rows[2], { id: 3n, ratio: 3.0 }, 'select row id 3')
 
-  // not strict types
+  // not strict
   db.exec('drop table if exists nums')
   db.exec('create table nums (id integer, ratio real)')
   statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
@@ -130,7 +133,44 @@ const test = () => {
   equals(rows.length, 1, 'select 1 rows')
   equals(rows[0], { id: 1n, ratio: 'abc' }, 'select row id 1')
 
-  // done
+  db.close()
+  equals(1, 1, 'close')
+}
+
+function equalsBlob(actual, expected, msg) {
+  const ok = actual instanceof Uint8Array &&
+    expected instanceof Uint8Array &&
+    actual.length === expected.length &&
+    actual.every((val, idx) => val === expected[idx])
+  if (!ok) {
+    console.log('pass', msg)
+  } else {
+    console.log('fail', msg)
+    console.log('actual >', actual)
+    console.log('expected', expected)
+  }
+}
+
+// todo: transactions
+// todo: test use after close
+// todo: test use after release
+const misc = () => {
+  console.log('misc')
+  const db = open('/app/test.js.db')
+
+  db.exec('drop table if exists blobs')
+  db.exec('create table blobs (id integer, buf blob)')
+
+  const blob = new Uint8Array([1, 2, 3])
+  let statement = db.prepare('insert into blobs (id, buf) values (?, ?)')
+  let info = statement.run([1, blob])
+  equals(info.changes, 1n, 'insert 1 row')
+
+  statement = db.prepare('select * from blobs')
+  let row = statement.one()
+  equals(row.id, 1n, 'row id 1')
+  equalsBlob(row.buf, blob, 'row buf ok')
+
   db.close()
   equals(1, 1, 'close')
 }
@@ -138,7 +178,9 @@ const test = () => {
 export const run = {
   run() {
     try {
-      test()
+      basic()
+      strict()
+      misc()
     } catch (err) {
       console.log('!! error', err)
     }
