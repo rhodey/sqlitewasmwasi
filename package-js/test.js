@@ -21,6 +21,7 @@ function equals(actual, expected, msg) {
   }
 }
 
+// todo: transactions
 // todo: test blob type
 // todo: test use after close
 // todo: test use after release
