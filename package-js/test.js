@@ -140,7 +140,7 @@ const strict = () => {
   db.exec('create table nums (id integer, ratio real)')
   statement = db.prepare('insert into nums (id, ratio) values (?, ?)')
   info = statement.run([1, 'abc'])
-  equals(info.changes, 1n, 'insert 1 real')
+  equals(info.changes, 1n, 'insert 1 text')
 
   statement = db.prepare('select * from nums order by id')
   rows = statement.all()
@@ -260,6 +260,18 @@ const misc = () => {
     console.log('error', 'closed db throws')
   } catch (err) {
     console.log('pass', 'closed db throws')
+  }
+
+  const db2 = open('file:/app/test.js.db?vfs=unix-dotfile')
+  equals(1, 1, 'vfs open')
+  db2.close()
+  equals(1, 1, 'vfs close')
+
+  try {
+    open('file:/app/test.js.db?vfs=notfound')
+    console.log('error', 'vfs open throws')
+  } catch (err) {
+    console.log('pass', 'vfs open throws')
   }
 }
 

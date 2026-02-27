@@ -1,5 +1,5 @@
 [workspace]
-members = ["component", "example-rust"]
+members = ["component", "package-rust", "example-rust"]
 default-members = ["example-rust"]
 resolver = "2"
 

@@ -1,100 +1,67 @@
-mod bindings {
-    wit_bindgen::generate!({
-        path: "../wit",
-        world: "sqlite-app",
-    });
-}
-
-use bindings::wasm::sqlite_wasi::sqlite::{close, exec, open, prepare, SqliteRow, SqliteValue};
-
-fn value_by_name<'a>(row: &'a SqliteRow, name: &str) -> Option<&'a SqliteValue> {
-    row.columns
-        .iter()
-        .position(|column| column == name)
-        .and_then(|index| row.values.get(index))
-}
+use package_rust::{open, Value};
 
 fn main() {
-    let db = open("file:/app/rust-client.db?vfs=unix-dotfile").expect("open db");
-
-    exec(db, "drop table if exists demo", None).expect("drop old table");
-
-    exec(
-        db,
-        "create table demo (id integer, name text, note text, ratio real, big_id integer)",
-        None,
-    )
-    .expect("exec init");
-
-    let insert_params = vec![
-        SqliteValue::Integer(1),
-        SqliteValue::Text("hello from rust".to_string()),
-        SqliteValue::Null,
-        SqliteValue::Real(3.25),
-        SqliteValue::Integer(9_007_199_254_740_993),
-    ];
-    {
-        let insert = prepare(
-            db,
-            "insert into demo (id, name, note, ratio, big_id) values (?, ?, ?, ?, ?)",
-        )
-        .expect("prepare insert");
-        let info = insert.run(Some(&insert_params)).expect("run insert");
-        println!(
-            "changes={} last_insert_rowid={}",
-            info.changes, info.last_insert_rowid
-        );
-        assert!(
-            insert.release(),
-            "release insert should be first release call"
-        );
+    if let Err(err) = example() {
+        println!("!! error {:?}", err);
     }
+}
 
-    {
-        let select =
-            prepare(db, "select id, name, note, ratio, big_id from demo").expect("prepare select");
-        let rows = select.all(None).expect("query rows");
+fn example() -> Result<(), package_rust::Error> {
+    let db = open("/app/example.rust.db")?;
+    db.exec("drop table if exists example", &[])?;
+    db.exec(
+        "create table example (id integer, name text, note text, ratio real, big_int integer)",
+        &[],
+    )?;
 
-        for row in rows {
-            for column in ["id", "name", "note", "ratio", "big_id"] {
-                let value = value_by_name(&row, column).expect("column should exist");
-                match value {
-                    SqliteValue::Null => println!("{column}=null"),
-                    SqliteValue::Integer(v) => println!("{column}=int={v}"),
-                    SqliteValue::Text(v) => println!("{column}=text={v}"),
-                    SqliteValue::Real(v) => println!("{column}=real={v}"),
-                    other => println!("{column}=other={other:?}"),
-                }
-            }
+    let mut insert =
+        db.prepare("insert into example (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
+    let mut info = insert.run(&[
+        Value::Integer(1),
+        Value::Text("hello from js".to_string()),
+        Value::Null,
+        Value::Real(3.25),
+        Value::Integer(9_007_199_254_740_993),
+    ])?;
+    println!("{} == 1", info.changes);
+    println!("{} == 1", info.last_insert_rowid);
+
+    info = insert.run(&[
+        Value::Integer(2),
+        Value::Text("hello from js".to_string()),
+        Value::Null,
+        Value::Real(3.25),
+        Value::Integer(9_007_199_254_740_993),
+    ])?;
+    println!("{} == 1", info.changes);
+    println!("{} == 2", info.last_insert_rowid);
+
+    let mut select =
+        db.prepare("select id, name, note, ratio, big_int from example where id = ?")?;
+    let row = select.one(&[Value::Integer(1)])?;
+    println!("{:?}", row);
+
+    select = db.prepare("select * from example where 1 = ? order by id")?;
+    let mut rows = select.all(&[Value::Integer(1)])?;
+    println!("{:?}", rows);
+
+    db.exec("drop table if exists txn", &[])?;
+    db.exec("create table txn (id integer)", &[])?;
+    insert = db.prepare("insert into txn (id) values (?)")?;
+    let mut insert_many = db.transaction(|nums: Vec<i64>| {
+        for num in nums {
+            insert.run(&[Value::Integer(num)])?;
         }
-        assert!(
-            select.release(),
-            "release select should be first release call"
-        );
-    }
+        Ok(())
+    });
 
-    {
-        let select_one = prepare(
-            db,
-            "select id, name, note, ratio, big_id from demo where id = ?",
-        )
-        .expect("prepare select one");
-        let row = select_one
-            .one(Some(&[SqliteValue::Integer(1)]))
-            .expect("query one row")
-            .expect("expected one() to return a row");
-        assert_eq!(row.columns.len(), 5, "expected one() to return 5 columns");
-        let name = value_by_name(&row, "name").expect("name column should exist");
-        match name {
-            SqliteValue::Text(value) if value == "hello from rust" => {}
-            _ => panic!("expected name column to be text=hello from rust"),
-        }
-        println!("one() got single row back");
-        assert!(
-            select_one.release(),
-            "release select one should be first release call"
-        );
-    }
+    let nums = vec![1, 4, 5, 6];
+    insert_many(nums)?;
 
-    close(db).expect("close db");
+    select = db.prepare("select * from txn order by id")?;
+    rows = select.all(&[])?;
+    println!("{:?}", rows);
+    db.close()?;
+
+    Ok(())
 }

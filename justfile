@@ -25,6 +25,22 @@ run-example-rust:
   mkdir -p app/
   wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example-rust-total.wasm
 
+plug-package-rust:
+  wac plug \
+    package-rust/dist/test.rust.wasm \
+    --plug target/wasm32-wasip2/release/component.wasm \
+    -o target/wasm32-wasip2/release/test.rust.total.wasm
+
+build-package-rust:
+  cargo build --manifest-path package-rust/Cargo.toml --bin test-rust --release
+  mkdir -p package-rust/dist
+  cp target/wasm32-wasip2/release/test-rust.wasm package-rust/dist/test.rust.wasm
+  just plug-package-rust
+
+run-package-rust:
+  mkdir -p app/
+  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/test.rust.total.wasm
+
 plug-package-js:
   wac plug \
     package-js/dist/test.js.wasm \
@@ -57,11 +73,13 @@ run-example-js:
 
 build:
   just component
+  just build-package-rust
   just build-example-rust
   just build-package-js
   just build-example-js
 
 test:
+  bash -c scripts/test-package-rust.sh
   bash -c scripts/test-example-rust.sh
   bash -c scripts/test-package-js.sh
   bash -c scripts/test-example-js.sh
