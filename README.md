@@ -1,7 +1,9 @@
 # SQLiteWASI
 SQLite WASI P2 component.
 
-Use SQLite from WASI. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) or [one of these](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
+Use SQLite from WASI. Run using [wasmtime](https://github.com/bytecodealliance/wasmtime#installation) or [other](https://github.com/yoshuawuyts/awesome-wasm-components#host-runtimes).
+
+[Rusqlite](https://crates.io/crates/rusqlite) is used internally but the APIs exposed are closer to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
 ## Build component (docker)
 ```
@@ -36,7 +38,7 @@ console.log(row) // >> { id: 1n, name: 'hello from js', note: null, ratio: 3.25,
 
 statement = db.prepare('select * from demo where 1 = ? order by id')
 let rows = statement.all([1])
-console.log(rows) // >> [ ... ]
+console.log(rows) // >> [ ..., ... ]
 ```
 
 ## Run tests
