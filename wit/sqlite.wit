@@ -1,0 +1,53 @@
+package wasm:sqlite-wasi;
+
+interface sqlite {
+  variant sqlite-value {
+    null,
+    integer(s64),
+    real(f64),
+    text(string),
+    blob(list<u8>),
+  }
+
+  record sqlite-row {
+    columns: list<string>,
+    values: list<sqlite-value>,
+  }
+
+  record sqlite-error {
+    code: s32,
+    message: string,
+  }
+
+  record sqlite-run-info {
+    changes: u64,
+    last-insert-rowid: s64,
+  }
+
+  type db-handle = u32;
+
+  resource statement {
+    run: func(params: option<list<sqlite-value>>) -> result<sqlite-run-info, sqlite-error>;
+    one: func(params: option<list<sqlite-value>>) -> result<option<sqlite-row>, sqlite-error>;
+    all: func(params: option<list<sqlite-value>>) -> result<list<sqlite-row>, sqlite-error>;
+    release: func() -> bool;
+  }
+
+  open: func(path: string) -> result<db-handle, sqlite-error>;
+  exec: func(db: db-handle, sql: string, params: option<list<sqlite-value>>) -> result<u64, sqlite-error>;
+  prepare: func(db: db-handle, sql: string) -> result<statement, sqlite-error>;
+  close: func(db: db-handle) -> result<_, sqlite-error>;
+}
+
+world sqlite-component {
+  export sqlite;
+}
+
+world sqlite-app {
+  import sqlite;
+}
+
+world sqlite-cli-app {
+  import sqlite;
+  export wasi:cli/run@0.2.3;
+}

@@ -1,0 +1,59 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup
+        run: |
+          rustup target add wasm32-wasip2
+          cargo install wasmtime-cli
+          cargo install wac-cli
+          sudo apt install -y build-essential clang just wget
+          bash -c ./scripts/wasi-sdk.sh
+          echo "WASI_SDK_PATH=$(realpath ../wasi-sdk-27.0-x86_64-linux)" > .env
+
+      - name: Build
+        run: just component
+
+      - name: Test package rust
+        run: bash -c scripts/test-package-rust.sh
+
+      - name: Test example rust
+        run: bash -c scripts/test-example-rust.sh
+
+      - name: Test package js
+        run: bash -c scripts/test-package-js.sh
+
+      - name: Test example js
+        run: bash -c scripts/test-example-js.sh
+
+      - name: Build docker
+        run: |
+          rm -rf target/
+          just component-docker
+
+      - name: Test package rust docker
+        run: bash -c scripts/test-package-rust.sh
+
+      - name: Test example rust docker
+        run: bash -c scripts/test-example-rust.sh
+
+      - name: Test package js docker
+        run: bash -c scripts/test-package-js.sh
+
+      - name: Test example js docker
+        run: bash -c scripts/test-example-js.sh
+

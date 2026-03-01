@@ -1,0 +1,9 @@
+.env*
+*\.swp
+target/
+package-js/dist/
+package-js/node_modules/
+example-js/dist/
+example-js/node_modules/
+notes.txt
+app/

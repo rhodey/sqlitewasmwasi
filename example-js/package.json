@@ -1,0 +1,17 @@
+{
+  "name": "example-js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bundle": "rollup -c",
+    "build": "npm run bundle && componentize-js dist/bundle.js --wit ../wit --world-name sqlite-cli-app --disable http fetch-event -o dist/example.js.wasm"
+  },
+  "dependencies": {
+    "sqlite-wasm-wasi": "file:../package-js"
+  },
+  "devDependencies": {
+    "@bytecodealliance/componentize-js": "0.19.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "rollup": "^4.50.1"
+  }
+}
