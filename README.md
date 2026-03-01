@@ -156,8 +156,8 @@ Unix-dotfile VFS is exactly like default "unix" except it avoids POSIX `flock()`
 
 ## Test
 ```
-cargo install wac-cli
 curl https://wasmtime.dev/install.sh -sSf | bash
+cargo install wac-cli
 just test
 ```
 
