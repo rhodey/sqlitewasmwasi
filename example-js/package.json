@@ -10,8 +10,8 @@
     "sqlite-wasm-wasi": "file:../package-js"
   },
   "devDependencies": {
-    "@bytecodealliance/componentize-js": "0.19.0",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "rollup": "^4.50.1"
+    "@bytecodealliance/componentize-js": "^0.19.3",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^4.59.0"
   }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "component"
-version = "0.1.0"
+version = "0.5.1"
 edition = "2021"
 license = "MIT"
 
@@ -8,6 +8,6 @@ license = "MIT"
 crate-type = ["cdylib"]
 
 [dependencies]
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.38.0", features = ["bundled"] }
 thiserror = "2"
-wit-bindgen = "0.36"
+wit-bindgen = "0.53.1"

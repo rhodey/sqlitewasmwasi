@@ -1,8 +1,8 @@
 {
   "name": "sqlite-wasm-wasi",
   "author": "rhodey",
-  "description": "SQLite WASI wrapper",
-  "version": "0.1.0",
+  "description": "Use SQLite from WASM WASI",
+  "version": "0.5.1",
   "license": "MIT",
   "type": "module",
   "main": "index.js",
@@ -17,13 +17,13 @@
     "build": "npm run bundle && componentize-js dist/bundle.js --wit ../wit --world-name sqlite-cli-app --disable http fetch-event -o dist/test.js.wasm"
   },
   "devDependencies": {
-    "@bytecodealliance/componentize-js": "0.19.0",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "rollup": "^4.50.1"
+    "@bytecodealliance/componentize-js": "^0.19.3",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^4.59.0"
   },
   "keywords": [
     "SQLite",
-    "WASI",
-    "WASM"
+    "WASM",
+    "WASI"
   ]
 }

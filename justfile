@@ -11,20 +11,6 @@ component-docker:
   {{sudo}} docker build -f Dockerfile -t component --target export .
   {{sudo}} docker build --output type=local,dest=./target/wasm32-wasip2/release --target export .
 
-plug-example-rust:
-  wac plug \
-    target/wasm32-wasip2/release/example-rust.wasm \
-    --plug target/wasm32-wasip2/release/component.wasm \
-    -o target/wasm32-wasip2/release/example-rust-total.wasm
-
-build-example-rust:
-  cargo build --manifest-path example-rust/Cargo.toml --release
-  just plug-example-rust
-
-run-example-rust:
-  mkdir -p app/
-  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example-rust-total.wasm
-
 plug-package-rust:
   wac plug \
     target/wasm32-wasip2/release/test-rust.wasm \
@@ -39,6 +25,20 @@ run-package-rust:
   mkdir -p app/
   wasmtime run --dir ./app::/app target/wasm32-wasip2/release/test.rust.total.wasm
 
+plug-example-rust:
+  wac plug \
+    target/wasm32-wasip2/release/example-rust.wasm \
+    --plug target/wasm32-wasip2/release/component.wasm \
+    -o target/wasm32-wasip2/release/example-rust-total.wasm
+
+build-example-rust:
+  cargo build --manifest-path example-rust/Cargo.toml --release
+  just plug-example-rust
+
+run-example-rust:
+  mkdir -p app/
+  wasmtime run --dir ./app::/app target/wasm32-wasip2/release/example-rust-total.wasm
+
 plug-package-js:
   wac plug \
     package-js/dist/test.js.wasm \
@@ -48,6 +48,8 @@ plug-package-js:
 build-package-js:
   npm --prefix package-js install
   npm --prefix package-js run build
+  cp target/wasm32-wasip2/release/component.wasm package-js/dist/
+  cp -r wit/ package-js/dist/
   just plug-package-js
 
 run-package-js:
