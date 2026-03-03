@@ -46,7 +46,9 @@ console.log(rows) // { id: 1n }, { id: 4n }, { id: 5n }, { id: 6n }
 db.close()
 ```
 
-## Setup
+## Linking
+You need `component.wasm`.
+
 If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi).
 
 Otherwise get `component.wasm` from `node_modules/sqlite-wasm-wasi/dist/` after `npm install sqlite-wasm-wasi`.
