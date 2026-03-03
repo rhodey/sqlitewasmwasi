@@ -48,6 +48,8 @@ plug-package-js:
 build-package-js:
   npm --prefix package-js install
   npm --prefix package-js run build
+  cp target/wasm32-wasip2/release/component.wasm package-js/dist/
+  cp -r wit/ package-js/dist/
   just plug-package-js
 
 run-package-js:
