@@ -1,8 +1,10 @@
 # sqlite-wasm-wasi
-Use SQLite from WASM WASI. See [parent](https://github.com/rhodey/sqlitewasmwasi)
+Use SQLite from WASM WASI. See [parent](https://github.com/rhodey/sqlitewasmwasi).
+
+API is similar to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
 ## Example
-See [full example](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-js)
+[Full sources](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-js).
 ```js
 import { open } from 'sqlite-wasm-wasi'
 
@@ -45,9 +47,11 @@ db.close()
 ```
 
 ## Setup
-If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi)
+If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi).
 
-Otherwise get `component.wasm` from `node_modules/sqlite-wasm-wasi/dist/` after npm install sqlite-wasm-wasi
+Otherwise get `component.wasm` from `node_modules/sqlite-wasm-wasi/dist/` after `npm install sqlite-wasm-wasi`.
+
+You need also `dist/wit/sqlite.wit`. Look at [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile) and all will become clear.
 
 ## Notes
 `let stmt = db.prepare('sql')` returns a "prepared statement".
