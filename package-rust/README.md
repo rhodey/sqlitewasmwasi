@@ -1,8 +1,6 @@
 # sqlite-wasm-wasi
 Use SQLite from WASM WASI. See [parent](https://github.com/rhodey/sqlitewasmwasi).
 
-API is similar to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
-
 ## Example
 [Full sources](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-rust).
 ```rust
