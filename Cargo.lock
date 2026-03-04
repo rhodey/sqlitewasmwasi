@@ -38,7 +38,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "component"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "rusqlite",
  "thiserror",
@@ -53,7 +53,7 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "example-rust"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "sqlite-wasm-wasi",
 ]
@@ -314,7 +314,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-wasm-wasi"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "wit-bindgen",
 ]

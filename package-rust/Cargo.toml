@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-wasm-wasi"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 license = "MIT"
 description = "Use SQLite from WASM WASI"
