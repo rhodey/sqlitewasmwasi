@@ -154,6 +154,8 @@ Unix-dotfile VFS is exactly like default "unix" except it avoids POSIX `flock()`
 
 [Lock.host](https://github.com/rhodey/lock.host) will be forking and trying to upstream wasmtime flock support.
 
+If you like SQLite you may also like [SQLitesuperfs](https://github.com/rhodey/sqlitesuperfs).
+
 ## Test
 ```
 curl https://wasmtime.dev/install.sh -sSf | bash
