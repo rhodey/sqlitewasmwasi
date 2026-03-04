@@ -5,6 +5,8 @@ export LIBSQLITE3_FLAGS := "-DSQLITE_THREADSAFE=0"
 component:
   rustup target add wasm32-wasip2
   export $(cat .env | xargs) && cargo build -p component --release
+  cp target/wasm32-wasip2/release/component.wasm package-rust/
+  cp -r wit/ package-rust/
 
 component-docker:
   mkdir -p target/wasm32-wasip2/release

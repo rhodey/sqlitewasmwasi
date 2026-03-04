@@ -79,9 +79,9 @@ You need `component.wasm`.
 
 If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi).
 
-Otherwise get `component.wasm` from `todo/todo/todo/` after `cargo add sqlite-wasm-wasi`.
+Otherwise get `component.wasm` from ` ~/.cargo/registry/src/.../sqlite-wasm-wasi-X.X.X/` after `cargo add sqlite-wasm-wasi`.
 
-You need also `todo/wit/sqlite.wit`. Look at [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile) and all will become clear.
+You need also `sqlite-wasm-wasi-X.X.X/wit/sqlite.wit`. Look at [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile) and all will become clear.
 
 ## Notes
 `open()` detaults to ["unix-dotfile" VFS](https://sqlite.org/vfs.html).

@@ -1,6 +1,8 @@
 .env*
 *\.swp
 target/
+package-rust/wit/
+package-rust/component.wasm
 package-js/dist/
 package-js/node_modules/
 example-js/dist/

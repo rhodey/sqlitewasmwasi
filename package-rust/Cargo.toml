@@ -11,8 +11,8 @@ include = [
   "src/lib.rs",
   "Cargo.toml",
   "README.md",
-  "../target/wasm32-wasip2/release/component.wasm",
-  "../wit/**",
+  "wit/**",
+  "component.wasm",
 ]
 
 [dependencies]
