@@ -81,7 +81,7 @@ If you want to build `component.wasm` yourself, see: [parent](https://github.com
 
 Otherwise run `cargo add sqlite-wasm-wasi` and `cargo fetch`.
 
-In dir `~/.cargo/registry/src/.../sqlite-wasm-wasi-X.X.X/` the files will be there. See also [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile).
+In dir `~/.cargo/registry/src/.../sqlite-wasm-wasi-X.X.X/` the files will be there. See [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile) also.
 
 ## Notes
 `open()` detaults to ["unix-dotfile" VFS](https://sqlite.org/vfs.html).
