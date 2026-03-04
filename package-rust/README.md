@@ -75,7 +75,7 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
 ```
 
 ## Linking
-You need `component.wasm` and `sqlite.wit`.
+You need `component.wasm`.
 
 If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi).
 
