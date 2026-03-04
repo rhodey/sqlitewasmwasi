@@ -8,7 +8,7 @@ repository = "https://github.com/rhodey/sqlitewasmwasi"
 readme = "README.md"
 keywords = ["sqlite", "wasm", "wasi"]
 include = [
-  "src/**",
+  "src/lib.rs",
   "Cargo.toml",
   "README.md",
   "../target/wasm32-wasip2/release/component.wasm",
