@@ -4,7 +4,7 @@ Use SQLite from WASM WASI. See [parent](https://github.com/rhodey/sqlitewasmwasi
 [Rusqlite](https://crates.io/crates/rusqlite) is used internally but the API exposed is closer to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
 ## Example
-[Full sources](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-rust).
+[Full sources](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-rust). Also [lock.host-wasm-rust](https://github.com/rhodey/lock.host-wasm-rust).
 ```rust
 use sqlite_wasm_wasi::{open, Value};
 
@@ -75,13 +75,11 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
 ```
 
 ## Linking
-You need `component.wasm`.
-
-If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi).
+You need `component.wasm`. If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi).
 
 Otherwise run `cargo add sqlite-wasm-wasi` and `cargo fetch`.
 
-In dir `~/.cargo/registry/src/.../sqlite-wasm-wasi-X.X.X/` the files will be there. See [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile) also.
+In dir `~/.cargo/registry/src/.../sqlite-wasm-wasi-X.X.X/` the files will be there.
 
 ## Notes
 `open()` detaults to ["unix-dotfile" VFS](https://sqlite.org/vfs.html).
