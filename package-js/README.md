@@ -4,7 +4,7 @@ Use SQLite from WASM WASI. See [parent](https://github.com/rhodey/sqlitewasmwasi
 API is similar to [better-sqlite3](https://www.npmjs.com/package/better-sqlite3).
 
 ## Example
-[Full sources](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-js).
+[Full sources](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-js). Also [lock.host-wasm-js](https://github.com/rhodey/lock.host-wasm-js).
 ```js
 import { open } from 'sqlite-wasm-wasi'
 

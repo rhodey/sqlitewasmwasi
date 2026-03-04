@@ -3,6 +3,17 @@ name = "sqlite-wasm-wasi"
 version = "0.5.1"
 edition = "2021"
 license = "MIT"
+description = "Use SQLite from WASM WASI"
+repository = "https://github.com/rhodey/sqlitewasmwasi"
+readme = "README.md"
+keywords = ["sqlite", "wasm", "wasi"]
+include = [
+  "src/lib.rs",
+  "Cargo.toml",
+  "README.md",
+  "wit/**",
+  "component.wasm",
+]
 
 [dependencies]
 wit-bindgen = "0.53.1"
