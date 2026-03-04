@@ -73,13 +73,13 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
 ```
 
 ## Linking
-You need `component.wasm`.
+You need `component.wasm` and `sqlite.wit`.
 
 If you want to build `component.wasm` yourself, see: [parent](https://github.com/rhodey/sqlitewasmwasi).
 
-Otherwise get `component.wasm` from ` ~/.cargo/registry/src/.../sqlite-wasm-wasi-X.X.X/` after `cargo add sqlite-wasm-wasi`.
+Otherwise run `cargo add sqlite-wasm-wasi` and `cargo fetch`.
 
-You need also `sqlite-wasm-wasi-X.X.X/wit/sqlite.wit`. Look at [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile) and all will become clear.
+In dir `~/.cargo/registry/src/.../sqlite-wasm-wasi-X.X.X/` the files will be there. See also [justfile](https://github.com/rhodey/sqlitewasmwasi/blob/main/justfile).
 
 ## Notes
 `open()` detaults to ["unix-dotfile" VFS](https://sqlite.org/vfs.html).
