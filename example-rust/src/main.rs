@@ -1,9 +1,5 @@
 use sqlite_wasm_wasi::{open, Value, NO_PARAMS};
 
-fn value(param: impl Into<Value>) -> Value {
-    param.into()
-}
-
 fn main() {
     if let Err(err) = example() {
         println!("!! error {:?}", err);
@@ -20,22 +16,22 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
 
     let mut insert =
         db.prepare("insert into example (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
-    let mut info = insert.run(&[
-        value(1_i64),
-        value("hello from js"),
+    let mut info = insert.run::<Value>(&[
+        1_i64.into(),
+        "hello from js".into(),
         Value::Null,
-        value(3.25),
-        value(9_007_199_254_740_993),
+        3.25.into(),
+        9_007_199_254_740_993.into(),
     ])?;
     println!("{} == 1", info.changes);
     println!("{} == 1", info.last_insert_rowid);
 
-    info = insert.run(&[
-        value(2_i64),
-        value("hello from js"),
+    info = insert.run::<Value>(&[
+        2_i64.into(),
+        "hello from js".into(),
         Value::Null,
-        value(3.25),
-        value(9_007_199_254_740_993),
+        3.25.into(),
+        9_007_199_254_740_993.into(),
     ])?;
     println!("{} == 1", info.changes);
     println!("{} == 2", info.last_insert_rowid);
