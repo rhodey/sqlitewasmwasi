@@ -199,10 +199,7 @@ fn strict() -> Result<(), Error> {
     println!("strict");
     let db = open("/app/test.rust.db")?;
     db.exec("drop table if exists nums", &NO_PARAMS)?;
-    db.exec(
-        "create table nums (id integer, ratio real) strict",
-        &NO_PARAMS,
-    )?;
+    db.exec("create table nums (id integer, ratio real) strict", &NO_PARAMS)?;
     let mut statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
     let mut info = statement.run(&[Value::from(1_i64), Value::from(3.25_f64)])?;
     equals(
