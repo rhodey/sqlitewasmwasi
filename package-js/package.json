@@ -2,7 +2,7 @@
   "name": "sqlite-wasm-wasi",
   "author": "rhodey",
   "description": "Use SQLite from WASM WASI",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "license": "MIT",
   "type": "module",
   "main": "index.js",
