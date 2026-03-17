@@ -1,5 +1,9 @@
 use sqlite_wasm_wasi::{open, row_value, Error, Row, Value, NO_PARAMS};
 
+fn value(param: impl Into<Value>) -> Value {
+    param.into()
+}
+
 fn value_to_string(value: &Value) -> String {
     match value {
         Value::Null => "null".to_string(),
@@ -64,11 +68,11 @@ fn basic() -> Result<(), Error> {
     let mut statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
     let mut info = statement.run(&[
-        1_i64.into(),
-        "hello from js".into(),
+        value(1_i64),
+        value("hello from js"),
         Value::Null,
-        3.25_f64.into(),
-        9_007_199_254_740_993_i64.into(),
+        value(3.25_f64),
+        value(9_007_199_254_740_993_i64),
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -94,11 +98,11 @@ fn basic() -> Result<(), Error> {
     statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
     info = statement.run(&[
-        2_i64.into(),
-        "hello from js".into(),
+        value(2_i64),
+        value("hello from js"),
         Value::Null,
-        3.25.into(),
-        9_007_199_254_740_993.into(),
+        value(3.25),
+        value(9_007_199_254_740_993),
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -204,20 +208,20 @@ fn strict() -> Result<(), Error> {
         &NO_PARAMS,
     )?;
     let mut statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    let mut info = statement.run(&[1_i64.into(), 3.25_f64.into()])?;
+    let mut info = statement.run(&[value(1_i64), value(3.25_f64)])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 real",
     );
-    info = statement.run(&[2_i64.into(), 2_i64.into()])?;
+    info = statement.run(&[value(2_i64), value(2_i64)])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 int as real",
     );
 
-    match statement.run(&[4_i64.into(), "abc".into()]) {
+    match statement.run(&[value(4_i64), value("abc")]) {
         Ok(_) => println!("error insert text as real throws"),
         Err(_) => println!("pass insert text as real throws"),
     }
@@ -239,7 +243,7 @@ fn strict() -> Result<(), Error> {
     db.exec("drop table if exists nums", &NO_PARAMS)?;
     db.exec("create table nums (id integer, ratio real)", &NO_PARAMS)?;
     statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    info = statement.run(&[1_i64.into(), "abc".into()])?;
+    info = statement.run(&[value(1_i64), value("abc")])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -375,7 +379,7 @@ fn misc() -> Result<(), Error> {
 
     let blob = vec![1, 2, 3];
     let mut statement = db.prepare("insert into misc (id, buf) values (?, ?)")?;
-    let info = statement.run(&[1_i64.into(), blob.clone().into()])?;
+    let info = statement.run(&[value(1_i64), value(blob.clone())])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
