@@ -64,11 +64,11 @@ fn basic() -> Result<(), Error> {
     let mut statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
     let mut info = statement.run(&[
-        Value::from(1_i64),
-        Value::from("hello from js"),
+        1_i64.into(),
+        "hello from js".into(),
         Value::Null,
-        Value::from(3.25_f64),
-        Value::from(9_007_199_254_740_993_i64),
+        3.25_f64.into(),
+        9_007_199_254_740_993_i64.into(),
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -94,11 +94,11 @@ fn basic() -> Result<(), Error> {
     statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
     info = statement.run(&[
-        Value::from(2_i64),
-        Value::from("hello from js".to_string()),
+        2_i64.into(),
+        "hello from js".into(),
         Value::Null,
-        Value::from(3.25),
-        Value::from(9_007_199_254_740_993),
+        3.25.into(),
+        9_007_199_254_740_993.into(),
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -133,7 +133,7 @@ fn basic() -> Result<(), Error> {
     equals(row_to_string(&row), row_to_string(&obj1), "select 1 row B");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    row = statement.one(&[Value::from(2_i64)])?.unwrap();
+    row = statement.one(&[2_i64])?.unwrap();
     equals(row_to_string(&row), row_to_string(&obj2), "select 1 row C");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = 3")?;
@@ -170,7 +170,7 @@ fn basic() -> Result<(), Error> {
     );
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    rows = statement.all(&[Value::from(3_i64)])?;
+    rows = statement.all(&[3_i64])?;
     equals(rows.len().to_string(), "0".to_string(), "select 0 rows");
 
     num = db.exec("update basic set id = 3 where id = ?", &[1_i64])?;
@@ -183,7 +183,7 @@ fn basic() -> Result<(), Error> {
     statement = db.prepare("select 3 where 1 = 1")?;
     row = statement.one(&NO_PARAMS)?.unwrap();
     let mut expected = Row::new();
-    expected.insert("3".to_string(), Value::from(3_i64));
+    expected.insert("3".to_string(), 3_i64.into());
     equals(
         row_to_string(&row),
         row_to_string(&expected),
@@ -199,22 +199,25 @@ fn strict() -> Result<(), Error> {
     println!("strict");
     let db = open("/app/test.rust.db")?;
     db.exec("drop table if exists nums", &NO_PARAMS)?;
-    db.exec("create table nums (id integer, ratio real) strict", &NO_PARAMS)?;
+    db.exec(
+        "create table nums (id integer, ratio real) strict",
+        &NO_PARAMS,
+    )?;
     let mut statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    let mut info = statement.run(&[Value::from(1_i64), Value::from(3.25_f64)])?;
+    let mut info = statement.run(&[1_i64.into(), 3.25_f64.into()])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 real",
     );
-    info = statement.run(&[Value::from(2_i64), Value::from(2_i64)])?;
+    info = statement.run(&[2_i64.into(), 2_i64.into()])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 int as real",
     );
 
-    match statement.run(&[Value::from(4_i64), Value::from("abc")]) {
+    match statement.run(&[4_i64.into(), "abc".into()]) {
         Ok(_) => println!("error insert text as real throws"),
         Err(_) => println!("pass insert text as real throws"),
     }
@@ -224,19 +227,19 @@ fn strict() -> Result<(), Error> {
     equals(rows.len().to_string(), "2".to_string(), "select 3 rows");
     equals(
         row_to_string(&rows[0]),
-        row_to_string(&row_num(1, Value::from(3.25))),
+        row_to_string(&row_num(1, 3.25)),
         "select row id 1",
     );
     equals(
         row_to_string(&rows[1]),
-        row_to_string(&row_num(2, Value::from(2.0))),
+        row_to_string(&row_num(2, 2.0)),
         "select row id 2",
     );
 
     db.exec("drop table if exists nums", &NO_PARAMS)?;
     db.exec("create table nums (id integer, ratio real)", &NO_PARAMS)?;
     statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    info = statement.run(&[Value::from(1_i64), Value::from("abc")])?;
+    info = statement.run(&[1_i64.into(), "abc".into()])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -248,7 +251,7 @@ fn strict() -> Result<(), Error> {
     equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
     equals(
         row_to_string(&rows[0]),
-        row_to_string(&row_num(1, Value::from("abc".to_string()))),
+        row_to_string(&row_num(1, "abc")),
         "select row id 1",
     );
 
@@ -372,7 +375,7 @@ fn misc() -> Result<(), Error> {
 
     let blob = vec![1, 2, 3];
     let mut statement = db.prepare("insert into misc (id, buf) values (?, ?)")?;
-    let info = statement.run(&[Value::from(1_i64), Value::from(blob.clone())])?;
+    let info = statement.run(&[1_i64.into(), blob.clone().into()])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -439,24 +442,24 @@ fn misc() -> Result<(), Error> {
 
 fn row_from_values(id: i64, name: &str, ratio: f64, big_int: i64) -> Row {
     let mut row = Row::new();
-    row.insert("id".to_string(), Value::from(id));
-    row.insert("name".to_string(), Value::from(name.to_string()));
+    row.insert("id".to_string(), id.into());
+    row.insert("name".to_string(), name.into());
     row.insert("note".to_string(), Value::Null);
-    row.insert("ratio".to_string(), Value::from(ratio));
-    row.insert("big_int".to_string(), Value::from(big_int));
+    row.insert("ratio".to_string(), ratio.into());
+    row.insert("big_int".to_string(), big_int.into());
     row
 }
 
-fn row_num(id: i64, ratio: Value) -> Row {
+fn row_num(id: i64, ratio: impl Into<Value>) -> Row {
     let mut row = Row::new();
-    row.insert("id".to_string(), Value::from(id));
-    row.insert("ratio".to_string(), ratio);
+    row.insert("id".to_string(), id.into());
+    row.insert("ratio".to_string(), ratio.into());
     row
 }
 
 fn row_id(id: i64) -> Row {
     let mut row = Row::new();
-    row.insert("id".to_string(), Value::from(id));
+    row.insert("id".to_string(), id.into());
     row
 }
 
