@@ -6,7 +6,7 @@ Use SQLite from WASM WASI. See [parent](https://github.com/rhodey/sqlitewasmwasi
 ## Example
 [Full sources](https://github.com/rhodey/sqlitewasmwasi/tree/main/example-rust). Also [lock.host-wasm-rust](https://github.com/rhodey/lock.host-wasm-rust).
 ```rust
-use sqlite_wasm_wasi::{open, Value};
+use sqlite_wasm_wasi::{open, Value, NO_PARAMS};
 
 fn main() {
     if let Err(err) = example() {
@@ -16,10 +16,10 @@ fn main() {
 
 fn example() -> Result<(), sqlite_wasm_wasi::Error> {
     let db = open("/app/example.rust.db")?;
-    db.exec("drop table if exists example", &[])?;
+    db.exec("drop table if exists example", &NO_PARAMS)?;
     db.exec(
         "create table example (id integer, name text, note text, ratio real, big_int integer)",
-        &[],
+        &NO_PARAMS,
     )?;
 
     let mut insert =
@@ -52,8 +52,8 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
     let mut rows = select.all(&[1_i64])?;
     println!("{:?}", rows);
 
-    db.exec("drop table if exists txn", &[])?;
-    db.exec("create table txn (id integer)", &[])?;
+    db.exec("drop table if exists txn", &NO_PARAMS)?;
+    db.exec("create table txn (id integer)", &NO_PARAMS)?;
     insert = db.prepare("insert into txn (id) values (?)")?;
     let mut insert_many = db.transaction(|nums: Vec<i64>| {
         for num in nums {
@@ -66,7 +66,7 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
     insert_many(nums)?;
 
     select = db.prepare("select * from txn order by id")?;
-    rows = select.all(&[])?;
+    rows = select.all(&NO_PARAMS)?;
     println!("{:?}", rows);
     db.close()?;
 

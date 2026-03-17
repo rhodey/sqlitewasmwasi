@@ -12,6 +12,7 @@ use bindings::wasm::sqlite_wasi::sqlite::{
 };
 
 pub type Value = SqliteValue;
+pub const NO_PARAMS: [Value; 0] = [];
 pub type RunInfo = SqliteRunInfo;
 pub type Row = BTreeMap<String, Value>;
 
@@ -134,14 +135,14 @@ impl Database {
         F: FnMut(A) -> Result<T, Error> + 'a,
     {
         move |arg| {
-            self.exec("BEGIN", &[])?;
+            self.exec("BEGIN", &NO_PARAMS)?;
             match f(arg) {
                 Ok(result) => {
-                    self.exec("COMMIT", &[])?;
+                    self.exec("COMMIT", &NO_PARAMS)?;
                     Ok(result)
                 }
                 Err(err) => {
-                    let _ = self.exec("ROLLBACK", &[]);
+                    let _ = self.exec("ROLLBACK", &NO_PARAMS);
                     Err(err)
                 }
             }
