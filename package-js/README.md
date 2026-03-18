@@ -64,8 +64,6 @@ If your app is eg an HTTP server you need to be calling `stmt.release()` when do
 
 Rust has the `Drop` trait and does not need release.
 
-ComponentizeJS may improve in the future.
-
 ## Notes
 `open()` detaults to ["unix-dotfile" VFS](https://sqlite.org/vfs.html).
 
