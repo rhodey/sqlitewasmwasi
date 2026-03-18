@@ -49,9 +49,21 @@ impl From<i64> for Value {
     }
 }
 
+impl From<i32> for Value {
+    fn from(value: i32) -> Self {
+        Self::Integer(value.into())
+    }
+}
+
 impl From<f64> for Value {
     fn from(value: f64) -> Self {
         Self::Real(value)
+    }
+}
+
+impl From<f32> for Value {
+    fn from(value: f32) -> Self {
+        Self::Real(value.into())
     }
 }
 
@@ -91,9 +103,21 @@ impl ToParam for i64 {
     }
 }
 
+impl ToParam for i32 {
+    fn to_param(&self) -> Value {
+        Value::Integer((*self).into())
+    }
+}
+
 impl ToParam for f64 {
     fn to_param(&self) -> Value {
         Value::Real(*self)
+    }
+}
+
+impl ToParam for f32 {
+    fn to_param(&self) -> Value {
+        Value::Real((*self).into())
     }
 }
 

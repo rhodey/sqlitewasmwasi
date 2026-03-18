@@ -204,20 +204,20 @@ fn strict() -> Result<(), Error> {
         &NO_PARAMS,
     )?;
     let mut statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    let mut info = statement.run(&[&1_i64, &3.25_f64])?;
+    let mut info = statement.run(&[&1_i32, &3.25_f32])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 real",
     );
-    info = statement.run(&[&2_i64, &2_i64])?;
+    info = statement.run(&[&2_i32, &2_i32])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 int as real",
     );
 
-    match statement.run(&[&4_i64, &"abc"]) {
+    match statement.run(&[&4_i32, &"abc"]) {
         Ok(_) => println!("error insert text as real throws"),
         Err(_) => println!("pass insert text as real throws"),
     }
@@ -239,7 +239,7 @@ fn strict() -> Result<(), Error> {
     db.exec("drop table if exists nums", &NO_PARAMS)?;
     db.exec("create table nums (id integer, ratio real)", &NO_PARAMS)?;
     statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    info = statement.run(&[&1_i64, &"abc"])?;
+    info = statement.run(&[&1_i32, &"abc"])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
