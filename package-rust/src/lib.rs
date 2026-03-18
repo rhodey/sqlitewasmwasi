@@ -12,6 +12,7 @@ use bindings::wasm::sqlite_wasi::sqlite::{
 };
 
 pub type Value = SqliteValue;
+pub const NO_PARAMS: [Value; 0] = [];
 pub type RunInfo = SqliteRunInfo;
 pub type Row = BTreeMap<String, Value>;
 
@@ -38,22 +39,70 @@ impl From<SqliteError> for Error {
     }
 }
 
+impl From<i64> for Value {
+    fn from(value: i64) -> Self {
+        Self::Integer(value)
+    }
+}
+
+impl From<f64> for Value {
+    fn from(value: f64) -> Self {
+        Self::Real(value)
+    }
+}
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Self::Text(value.to_string())
+    }
+}
+
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Self::Text(value)
+    }
+}
+
+impl From<Vec<u8>> for Value {
+    fn from(value: Vec<u8>) -> Self {
+        Self::Blob(value)
+    }
+}
+
+impl From<&[u8]> for Value {
+    fn from(value: &[u8]) -> Self {
+        Self::Blob(value.to_vec())
+    }
+}
+
 pub struct Statement {
     stmt: bindings::wasm::sqlite_wasi::sqlite::Statement,
 }
 
 impl Statement {
-    pub fn run(&self, params: &[Value]) -> Result<RunInfo, Error> {
-        self.stmt.run(Some(params)).map_err(Into::into)
+    pub fn run<P>(&self, params: &[P]) -> Result<RunInfo, Error>
+    where
+        P: Clone + Into<Value>,
+    {
+        let params = params_to_values(params);
+        self.stmt.run(Some(&params)).map_err(Into::into)
     }
 
-    pub fn one(&self, params: &[Value]) -> Result<Option<Row>, Error> {
-        let row = self.stmt.one(Some(params)).map_err(Error::from)?;
+    pub fn one<P>(&self, params: &[P]) -> Result<Option<Row>, Error>
+    where
+        P: Clone + Into<Value>,
+    {
+        let params = params_to_values(params);
+        let row = self.stmt.one(Some(&params)).map_err(Error::from)?;
         Ok(row.map(row_to_object))
     }
 
-    pub fn all(&self, params: &[Value]) -> Result<Vec<Row>, Error> {
-        let rows = self.stmt.all(Some(params)).map_err(Error::from)?;
+    pub fn all<P>(&self, params: &[P]) -> Result<Vec<Row>, Error>
+    where
+        P: Clone + Into<Value>,
+    {
+        let params = params_to_values(params);
+        let rows = self.stmt.all(Some(&params)).map_err(Error::from)?;
         Ok(rows.into_iter().map(row_to_object).collect())
     }
 
@@ -68,8 +117,12 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn exec(&self, sql: &str, params: &[Value]) -> Result<u64, Error> {
-        exec(self.handle, sql, Some(params)).map_err(Error::from)
+    pub fn exec<P>(&self, sql: &str, params: &[P]) -> Result<u64, Error>
+    where
+        P: Clone + Into<Value>,
+    {
+        let params = params_to_values(params);
+        exec(self.handle, sql, Some(&params)).map_err(Error::from)
     }
 
     pub fn prepare(&self, sql: &str) -> Result<Statement, Error> {
@@ -82,14 +135,14 @@ impl Database {
         F: FnMut(A) -> Result<T, Error> + 'a,
     {
         move |arg| {
-            self.exec("BEGIN", &[])?;
+            self.exec("BEGIN", &NO_PARAMS)?;
             match f(arg) {
                 Ok(result) => {
-                    self.exec("COMMIT", &[])?;
+                    self.exec("COMMIT", &NO_PARAMS)?;
                     Ok(result)
                 }
                 Err(err) => {
-                    let _ = self.exec("ROLLBACK", &[]);
+                    let _ = self.exec("ROLLBACK", &NO_PARAMS);
                     Err(err)
                 }
             }
@@ -120,4 +173,11 @@ fn row_to_object(row: bindings::wasm::sqlite_wasi::sqlite::SqliteRow) -> Row {
         .into_iter()
         .zip(row.values)
         .collect::<BTreeMap<_, _>>()
+}
+
+fn params_to_values<P>(params: &[P]) -> Vec<Value>
+where
+    P: Clone + Into<Value>,
+{
+    params.iter().cloned().map(Into::into).collect()
 }
