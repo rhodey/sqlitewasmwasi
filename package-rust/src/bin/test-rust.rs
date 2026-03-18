@@ -1,4 +1,4 @@
-use sqlite_wasm_wasi::{open, row_value, Error, Row, Value, NO_PARAMS};
+use sqlite_wasm_wasi::{open, row_value, Error, Row, Value};
 
 fn value_to_string(value: &Value) -> String {
     match value {
@@ -49,11 +49,11 @@ fn equals_blob(actual: &[u8], expected: &[u8], msg: &str) {
 fn basic() -> Result<(), Error> {
     println!("basic");
     let db = open("/app/test.rust.db")?;
-    db.exec("drop table if exists basic", &NO_PARAMS)?;
+    db.exec("drop table if exists basic", &[])?;
 
     let mut num = db.exec(
         "create table basic (id integer, name text, note text, ratio real, big_int integer)",
-        &NO_PARAMS,
+        &[],
     )?;
     equals(
         format!("{}n", num),
@@ -63,12 +63,12 @@ fn basic() -> Result<(), Error> {
 
     let mut statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
-    let mut info = statement.run::<Value>(&[
-        1_i64.into(),
-        "hello from js".into(),
-        Value::Null,
-        3.25_f64.into(),
-        9_007_199_254_740_993_i64.into(),
+    let mut info = statement.run(&[
+        &1_i64,
+        &"hello from js",
+        &Value::Null,
+        &3.25_f64,
+        &9_007_199_254_740_993_i64,
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -93,12 +93,12 @@ fn basic() -> Result<(), Error> {
 
     statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
-    info = statement.run::<Value>(&[
-        2_i64.into(),
-        "hello from js".into(),
-        Value::Null,
-        3.25.into(),
-        9_007_199_254_740_993.into(),
+    info = statement.run(&[
+        &2_i64,
+        &"hello from js",
+        &Value::Null,
+        &3.25_f64,
+        &9_007_199_254_740_993_i64,
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -125,19 +125,19 @@ fn basic() -> Result<(), Error> {
     let obj2 = row_from_values(2, "hello from js", 3.25, 9_007_199_254_740_993);
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = 1")?;
-    let mut row = statement.one(&NO_PARAMS)?.unwrap();
+    let mut row = statement.one(&[])?.unwrap();
     equals(row_to_string(&row), row_to_string(&obj1), "select 1 row A");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    row = statement.one(&[1_i64])?.unwrap();
+    row = statement.one(&[&1_i64])?.unwrap();
     equals(row_to_string(&row), row_to_string(&obj1), "select 1 row B");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    row = statement.one(&[2_i64])?.unwrap();
+    row = statement.one(&[&2_i64])?.unwrap();
     equals(row_to_string(&row), row_to_string(&obj2), "select 1 row C");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = 3")?;
-    let row_or_null = statement.one(&NO_PARAMS)?;
+    let row_or_null = statement.one(&[])?;
     equals(
         row_or_null
             .map(|r| row_to_string(&r))
@@ -147,7 +147,7 @@ fn basic() -> Result<(), Error> {
     );
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic order by id")?;
-    let mut rows = statement.all(&NO_PARAMS)?;
+    let mut rows = statement.all(&[])?;
     equals(rows.len().to_string(), "2".to_string(), "select 2 rows");
     equals(
         row_to_string(&rows[0]),
@@ -161,7 +161,7 @@ fn basic() -> Result<(), Error> {
     );
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    rows = statement.all(&[1_i64])?;
+    rows = statement.all(&[&1_i64])?;
     equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
     equals(
         row_to_string(&rows[0]),
@@ -170,18 +170,18 @@ fn basic() -> Result<(), Error> {
     );
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    rows = statement.all(&[3_i64])?;
+    rows = statement.all(&[&3_i64])?;
     equals(rows.len().to_string(), "0".to_string(), "select 0 rows");
 
-    num = db.exec("update basic set id = 3 where id = ?", &[1_i64])?;
+    num = db.exec("update basic set id = 3 where id = ?", &[&1_i64])?;
     equals(format!("{}n", num), "1n".to_string(), "update 1 rows");
-    num = db.exec("update basic set id = 3 where id = ?", &[1_i64])?;
+    num = db.exec("update basic set id = 3 where id = ?", &[&1_i64])?;
     equals(format!("{}n", num), "0n".to_string(), "update 0 rows");
-    num = db.exec("delete from basic where 1 = ?", &[1_i64])?;
+    num = db.exec("delete from basic where 1 = ?", &[&1_i64])?;
     equals(format!("{}n", num), "2n".to_string(), "delete 2 rows");
 
     statement = db.prepare("select 3 where 1 = 1")?;
-    row = statement.one(&NO_PARAMS)?.unwrap();
+    row = statement.one(&[])?.unwrap();
     let mut expected = Row::new();
     expected.insert("3".to_string(), 3_i64.into());
     equals(
@@ -198,32 +198,32 @@ fn basic() -> Result<(), Error> {
 fn strict() -> Result<(), Error> {
     println!("strict");
     let db = open("/app/test.rust.db")?;
-    db.exec("drop table if exists nums", &NO_PARAMS)?;
+    db.exec("drop table if exists nums", &[])?;
     db.exec(
         "create table nums (id integer, ratio real) strict",
-        &NO_PARAMS,
+        &[],
     )?;
     let mut statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    let mut info = statement.run::<Value>(&[1_i64.into(), 3.25_f64.into()])?;
+    let mut info = statement.run(&[&1, &3.25])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 real",
     );
-    info = statement.run::<Value>(&[2_i64.into(), 2_i64.into()])?;
+    info = statement.run(&[&2, &2])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 int as real",
     );
 
-    match statement.run::<Value>(&[4_i64.into(), "abc".into()]) {
+    match statement.run(&[&4, &"abc"]) {
         Ok(_) => println!("error insert text as real throws"),
         Err(_) => println!("pass insert text as real throws"),
     }
 
     statement = db.prepare("select * from nums order by id")?;
-    let mut rows = statement.all(&NO_PARAMS)?;
+    let mut rows = statement.all(&[])?;
     equals(rows.len().to_string(), "2".to_string(), "select 3 rows");
     equals(
         row_to_string(&rows[0]),
@@ -236,10 +236,10 @@ fn strict() -> Result<(), Error> {
         "select row id 2",
     );
 
-    db.exec("drop table if exists nums", &NO_PARAMS)?;
-    db.exec("create table nums (id integer, ratio real)", &NO_PARAMS)?;
+    db.exec("drop table if exists nums", &[])?;
+    db.exec("create table nums (id integer, ratio real)", &[])?;
     statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    info = statement.run::<Value>(&[1_i64.into(), "abc".into()])?;
+    info = statement.run(&[&1, &"abc"])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -247,7 +247,7 @@ fn strict() -> Result<(), Error> {
     );
 
     statement = db.prepare("select * from nums order by id")?;
-    rows = statement.all(&NO_PARAMS)?;
+    rows = statement.all(&[])?;
     equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
     equals(
         row_to_string(&rows[0]),
@@ -263,11 +263,11 @@ fn strict() -> Result<(), Error> {
 fn txn() -> Result<(), Error> {
     println!("txn");
     let db = open("/app/test.rust.db")?;
-    db.exec("drop table if exists txn", &NO_PARAMS)?;
+    db.exec("drop table if exists txn", &[])?;
 
-    db.exec("create table txn (id integer)", &NO_PARAMS)?;
+    db.exec("create table txn (id integer)", &[])?;
     let insert = db.prepare("insert into txn (id) values (?)")?;
-    let mut info = insert.run(&[1_i64])?;
+    let mut info = insert.run(&[&1_i64])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -285,7 +285,7 @@ fn txn() -> Result<(), Error> {
         .collect::<Vec<_>>();
 
     let select = db.prepare("select * from txn order by id")?;
-    let mut rows = select.all(&NO_PARAMS)?;
+    let mut rows = select.all(&[])?;
     equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
     equals(
         row_to_string(&rows[0]),
@@ -295,7 +295,7 @@ fn txn() -> Result<(), Error> {
 
     let mut txn = db.transaction(|nums: Vec<i64>| {
         for num in nums {
-            info = insert.run(&[num])?;
+            info = insert.run(&[&num])?;
             equals(
                 format!("{}n", info.changes),
                 "1n".to_string(),
@@ -315,7 +315,7 @@ fn txn() -> Result<(), Error> {
         .collect::<Vec<_>>();
     txn(nums.clone())?;
 
-    rows = select.all(&NO_PARAMS)?;
+    rows = select.all(&[])?;
     equals(
         rows.len().to_string(),
         objs.len().to_string(),
@@ -331,7 +331,7 @@ fn txn() -> Result<(), Error> {
 
     let mut txn = db.transaction(|nums: Vec<i64>| -> Result<(), Error> {
         for num in nums {
-            insert.run(&[num])?;
+            insert.run(&[&num])?;
         }
         Err(Error {
             code: -1,
@@ -347,7 +347,7 @@ fn txn() -> Result<(), Error> {
         }
     }
 
-    rows = select.all(&NO_PARAMS)?;
+    rows = select.all(&[])?;
     equals(
         rows.len().to_string(),
         objs.len().to_string(),
@@ -370,12 +370,12 @@ fn misc() -> Result<(), Error> {
     println!("misc");
     let db = open("/app/test.rust.db")?;
 
-    db.exec("drop table if exists misc", &NO_PARAMS)?;
-    db.exec("create table misc (id integer, buf blob)", &NO_PARAMS)?;
+    db.exec("drop table if exists misc", &[])?;
+    db.exec("create table misc (id integer, buf blob)", &[])?;
 
     let blob = vec![1, 2, 3];
     let mut statement = db.prepare("insert into misc (id, buf) values (?, ?)")?;
-    let info = statement.run::<Value>(&[1_i64.into(), blob.clone().into()])?;
+    let info = statement.run(&[&1_i64, &blob])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -383,7 +383,7 @@ fn misc() -> Result<(), Error> {
     );
 
     statement = db.prepare("select * from misc")?;
-    let row = statement.one(&NO_PARAMS)?.unwrap();
+    let row = statement.one(&[])?.unwrap();
     equals(
         match row_value(&row, "id") {
             Some(Value::Integer(v)) => format!("{v}n"),
@@ -404,17 +404,17 @@ fn misc() -> Result<(), Error> {
         "release true",
     );
 
-    match statement.run(&NO_PARAMS) {
+    match statement.run(&[]) {
         Ok(_) => println!("error released statement run throws"),
         Err(_) => println!("pass released statement run throws"),
     }
 
-    match statement.one(&NO_PARAMS) {
+    match statement.one(&[]) {
         Ok(_) => println!("error released statement one throws"),
         Err(_) => println!("pass released statement one throws"),
     }
 
-    match statement.all(&NO_PARAMS) {
+    match statement.all(&[]) {
         Ok(_) => println!("error released statement all throws"),
         Err(_) => println!("pass released statement all throws"),
     }
@@ -422,7 +422,7 @@ fn misc() -> Result<(), Error> {
     db.close()?;
     equals("1".to_string(), "1".to_string(), "close");
 
-    match db.exec("drop table if exists misc", &NO_PARAMS) {
+    match db.exec("drop table if exists misc", &[]) {
         Ok(_) => println!("error closed db throws"),
         Err(_) => println!("pass closed db throws"),
     }

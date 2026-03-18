@@ -12,7 +12,10 @@ use bindings::wasm::sqlite_wasi::sqlite::{
 };
 
 pub type Value = SqliteValue;
-pub const NO_PARAMS: [Value; 0] = [];
+pub trait ToParam {
+    fn to_param(&self) -> Value;
+}
+
 pub type RunInfo = SqliteRunInfo;
 pub type Row = BTreeMap<String, Value>;
 
@@ -45,9 +48,21 @@ impl From<i64> for Value {
     }
 }
 
+impl From<i32> for Value {
+    fn from(value: i32) -> Self {
+        Self::Integer(value.into())
+    }
+}
+
 impl From<f64> for Value {
     fn from(value: f64) -> Self {
         Self::Real(value)
+    }
+}
+
+impl From<f32> for Value {
+    fn from(value: f32) -> Self {
+        Self::Real(value.into())
     }
 }
 
@@ -75,32 +90,86 @@ impl From<&[u8]> for Value {
     }
 }
 
+impl ToParam for Value {
+    fn to_param(&self) -> Value {
+        self.clone()
+    }
+}
+
+impl ToParam for i64 {
+    fn to_param(&self) -> Value {
+        Value::Integer(*self)
+    }
+}
+
+impl ToParam for i32 {
+    fn to_param(&self) -> Value {
+        Value::Integer((*self).into())
+    }
+}
+
+impl ToParam for f64 {
+    fn to_param(&self) -> Value {
+        Value::Real(*self)
+    }
+}
+
+impl ToParam for f32 {
+    fn to_param(&self) -> Value {
+        Value::Real((*self).into())
+    }
+}
+
+impl ToParam for str {
+    fn to_param(&self) -> Value {
+        Value::Text(self.to_string())
+    }
+}
+
+impl ToParam for String {
+    fn to_param(&self) -> Value {
+        Value::Text(self.clone())
+    }
+}
+
+impl ToParam for Vec<u8> {
+    fn to_param(&self) -> Value {
+        Value::Blob(self.clone())
+    }
+}
+
+impl ToParam for [u8] {
+    fn to_param(&self) -> Value {
+        Value::Blob(self.to_vec())
+    }
+}
+
+impl<T> ToParam for &T
+where
+    T: ToParam + ?Sized,
+{
+    fn to_param(&self) -> Value {
+        (*self).to_param()
+    }
+}
+
 pub struct Statement {
     stmt: bindings::wasm::sqlite_wasi::sqlite::Statement,
 }
 
 impl Statement {
-    pub fn run<P>(&self, params: &[P]) -> Result<RunInfo, Error>
-    where
-        P: Clone + Into<Value>,
-    {
+    pub fn run(&self, params: &[&dyn ToParam]) -> Result<RunInfo, Error> {
         let params = params_to_values(params);
         self.stmt.run(Some(&params)).map_err(Into::into)
     }
 
-    pub fn one<P>(&self, params: &[P]) -> Result<Option<Row>, Error>
-    where
-        P: Clone + Into<Value>,
-    {
+    pub fn one(&self, params: &[&dyn ToParam]) -> Result<Option<Row>, Error> {
         let params = params_to_values(params);
         let row = self.stmt.one(Some(&params)).map_err(Error::from)?;
         Ok(row.map(row_to_object))
     }
 
-    pub fn all<P>(&self, params: &[P]) -> Result<Vec<Row>, Error>
-    where
-        P: Clone + Into<Value>,
-    {
+    pub fn all(&self, params: &[&dyn ToParam]) -> Result<Vec<Row>, Error> {
         let params = params_to_values(params);
         let rows = self.stmt.all(Some(&params)).map_err(Error::from)?;
         Ok(rows.into_iter().map(row_to_object).collect())
@@ -117,10 +186,7 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn exec<P>(&self, sql: &str, params: &[P]) -> Result<u64, Error>
-    where
-        P: Clone + Into<Value>,
-    {
+    pub fn exec(&self, sql: &str, params: &[&dyn ToParam]) -> Result<u64, Error> {
         let params = params_to_values(params);
         exec(self.handle, sql, Some(&params)).map_err(Error::from)
     }
@@ -135,14 +201,14 @@ impl Database {
         F: FnMut(A) -> Result<T, Error> + 'a,
     {
         move |arg| {
-            self.exec("BEGIN", &NO_PARAMS)?;
+            self.exec("BEGIN", &[])?;
             match f(arg) {
                 Ok(result) => {
-                    self.exec("COMMIT", &NO_PARAMS)?;
+                    self.exec("COMMIT", &[])?;
                     Ok(result)
                 }
                 Err(err) => {
-                    let _ = self.exec("ROLLBACK", &NO_PARAMS);
+                    let _ = self.exec("ROLLBACK", &[]);
                     Err(err)
                 }
             }
@@ -175,9 +241,6 @@ fn row_to_object(row: bindings::wasm::sqlite_wasi::sqlite::SqliteRow) -> Row {
         .collect::<BTreeMap<_, _>>()
 }
 
-fn params_to_values<P>(params: &[P]) -> Vec<Value>
-where
-    P: Clone + Into<Value>,
-{
-    params.iter().cloned().map(Into::into).collect()
+fn params_to_values(params: &[&dyn ToParam]) -> Vec<Value> {
+    params.iter().map(|param| param.to_param()).collect()
 }
