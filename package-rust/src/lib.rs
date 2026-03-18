@@ -16,7 +16,6 @@ pub trait ToParam {
     fn to_param(&self) -> Value;
 }
 
-pub const NO_PARAMS: [&dyn ToParam; 0] = [];
 pub type RunInfo = SqliteRunInfo;
 pub type Row = BTreeMap<String, Value>;
 
@@ -202,14 +201,14 @@ impl Database {
         F: FnMut(A) -> Result<T, Error> + 'a,
     {
         move |arg| {
-            self.exec("BEGIN", &NO_PARAMS)?;
+            self.exec("BEGIN", &[])?;
             match f(arg) {
                 Ok(result) => {
-                    self.exec("COMMIT", &NO_PARAMS)?;
+                    self.exec("COMMIT", &[])?;
                     Ok(result)
                 }
                 Err(err) => {
-                    let _ = self.exec("ROLLBACK", &NO_PARAMS);
+                    let _ = self.exec("ROLLBACK", &[]);
                     Err(err)
                 }
             }
