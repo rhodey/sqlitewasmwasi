@@ -63,12 +63,12 @@ fn basic() -> Result<(), Error> {
 
     let mut statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
-    let mut info = statement.run::<Value>(&[
-        1_i64.into(),
-        "hello from js".into(),
-        Value::Null,
-        3.25_f64.into(),
-        9_007_199_254_740_993_i64.into(),
+    let mut info = statement.run(&[
+        &1_i64,
+        &"hello from js",
+        &Value::Null,
+        &3.25_f64,
+        &9_007_199_254_740_993_i64,
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -93,12 +93,12 @@ fn basic() -> Result<(), Error> {
 
     statement =
         db.prepare("insert into basic (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
-    info = statement.run::<Value>(&[
-        2_i64.into(),
-        "hello from js".into(),
-        Value::Null,
-        3.25.into(),
-        9_007_199_254_740_993.into(),
+    info = statement.run(&[
+        &2_i64,
+        &"hello from js",
+        &Value::Null,
+        &3.25_f64,
+        &9_007_199_254_740_993_i64,
     ])?;
     equals(
         format!("{}n", info.changes),
@@ -129,11 +129,11 @@ fn basic() -> Result<(), Error> {
     equals(row_to_string(&row), row_to_string(&obj1), "select 1 row A");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    row = statement.one(&[1_i64])?.unwrap();
+    row = statement.one(&[&1_i64])?.unwrap();
     equals(row_to_string(&row), row_to_string(&obj1), "select 1 row B");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    row = statement.one(&[2_i64])?.unwrap();
+    row = statement.one(&[&2_i64])?.unwrap();
     equals(row_to_string(&row), row_to_string(&obj2), "select 1 row C");
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = 3")?;
@@ -161,7 +161,7 @@ fn basic() -> Result<(), Error> {
     );
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    rows = statement.all(&[1_i64])?;
+    rows = statement.all(&[&1_i64])?;
     equals(rows.len().to_string(), "1".to_string(), "select 1 rows");
     equals(
         row_to_string(&rows[0]),
@@ -170,14 +170,14 @@ fn basic() -> Result<(), Error> {
     );
 
     statement = db.prepare("select id, name, note, ratio, big_int from basic where id = ?")?;
-    rows = statement.all(&[3_i64])?;
+    rows = statement.all(&[&3_i64])?;
     equals(rows.len().to_string(), "0".to_string(), "select 0 rows");
 
-    num = db.exec("update basic set id = 3 where id = ?", &[1_i64])?;
+    num = db.exec("update basic set id = 3 where id = ?", &[&1_i64])?;
     equals(format!("{}n", num), "1n".to_string(), "update 1 rows");
-    num = db.exec("update basic set id = 3 where id = ?", &[1_i64])?;
+    num = db.exec("update basic set id = 3 where id = ?", &[&1_i64])?;
     equals(format!("{}n", num), "0n".to_string(), "update 0 rows");
-    num = db.exec("delete from basic where 1 = ?", &[1_i64])?;
+    num = db.exec("delete from basic where 1 = ?", &[&1_i64])?;
     equals(format!("{}n", num), "2n".to_string(), "delete 2 rows");
 
     statement = db.prepare("select 3 where 1 = 1")?;
@@ -204,20 +204,20 @@ fn strict() -> Result<(), Error> {
         &NO_PARAMS,
     )?;
     let mut statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    let mut info = statement.run::<Value>(&[1_i64.into(), 3.25_f64.into()])?;
+    let mut info = statement.run(&[&1_i64, &3.25_f64])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 real",
     );
-    info = statement.run::<Value>(&[2_i64.into(), 2_i64.into()])?;
+    info = statement.run(&[&2_i64, &2_i64])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
         "insert 1 int as real",
     );
 
-    match statement.run::<Value>(&[4_i64.into(), "abc".into()]) {
+    match statement.run(&[&4_i64, &"abc"]) {
         Ok(_) => println!("error insert text as real throws"),
         Err(_) => println!("pass insert text as real throws"),
     }
@@ -239,7 +239,7 @@ fn strict() -> Result<(), Error> {
     db.exec("drop table if exists nums", &NO_PARAMS)?;
     db.exec("create table nums (id integer, ratio real)", &NO_PARAMS)?;
     statement = db.prepare("insert into nums (id, ratio) values (?, ?)")?;
-    info = statement.run::<Value>(&[1_i64.into(), "abc".into()])?;
+    info = statement.run(&[&1_i64, &"abc"])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -267,7 +267,7 @@ fn txn() -> Result<(), Error> {
 
     db.exec("create table txn (id integer)", &NO_PARAMS)?;
     let insert = db.prepare("insert into txn (id) values (?)")?;
-    let mut info = insert.run(&[1_i64])?;
+    let mut info = insert.run(&[&1_i64])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
@@ -295,7 +295,7 @@ fn txn() -> Result<(), Error> {
 
     let mut txn = db.transaction(|nums: Vec<i64>| {
         for num in nums {
-            info = insert.run(&[num])?;
+            info = insert.run(&[&num])?;
             equals(
                 format!("{}n", info.changes),
                 "1n".to_string(),
@@ -331,7 +331,7 @@ fn txn() -> Result<(), Error> {
 
     let mut txn = db.transaction(|nums: Vec<i64>| -> Result<(), Error> {
         for num in nums {
-            insert.run(&[num])?;
+            insert.run(&[&num])?;
         }
         Err(Error {
             code: -1,
@@ -375,7 +375,7 @@ fn misc() -> Result<(), Error> {
 
     let blob = vec![1, 2, 3];
     let mut statement = db.prepare("insert into misc (id, buf) values (?, ?)")?;
-    let info = statement.run::<Value>(&[1_i64.into(), blob.clone().into()])?;
+    let info = statement.run(&[&1_i64, &blob])?;
     equals(
         format!("{}n", info.changes),
         "1n".to_string(),
