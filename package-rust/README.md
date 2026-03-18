@@ -25,20 +25,20 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
     let mut insert =
         db.prepare("insert into example (id, name, note, ratio, big_int) values (?, ?, ?, ?, ?)")?;
     let mut info = insert.run(&[
-        &1_i32,
+        &1,
         &"hello from js",
         &Value::Null,
-        &3.25_f32,
+        &3.25,
         &9_007_199_254_740_993_i64,
     ])?;
     println!("{} == 1", info.changes);
     println!("{} == 1", info.last_insert_rowid);
 
     info = insert.run(&[
-        &2_i32,
+        &2,
         &"hello from js",
         &Value::Null,
-        &3.25_f32,
+        &3.25,
         &9_007_199_254_740_993_i64,
     ])?;
     println!("{} == 1", info.changes);
@@ -46,11 +46,11 @@ fn example() -> Result<(), sqlite_wasm_wasi::Error> {
 
     let mut select =
         db.prepare("select id, name, note, ratio, big_int from example where id = ?")?;
-    let row = select.one(&[&1_i32])?;
+    let row = select.one(&[&1])?;
     println!("{:?}", row);
 
     select = db.prepare("select * from example where 1 = ? order by id")?;
-    let mut rows = select.all(&[&1_i32])?;
+    let mut rows = select.all(&[&1])?;
     println!("{:?}", rows);
 
     db.exec("drop table if exists txn", &NO_PARAMS)?;
